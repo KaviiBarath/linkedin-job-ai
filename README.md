@@ -1,33 +1,52 @@
-STARK-on-AI LinkedIn JobApply Bot
-This is the first step of expressing my pure hate towards AI job screening stuff that companies use to "screen" our application without even a human looking into it. We shouldn't take sticks and stones to a sword fight, right? So, here I am with a sword.
+# linkedin-job-ai
 
-Why this started?
-I once got a rejection mail for a job even before i got the application acknowledgement mail and that was the beginning of my Villan Arc, i felt a lot of emotions that day is my application not even worthy enough for a human to read? why can't a recruiter review the applications themselves, and then i realized something, yes they might be getting a lot of applications and they might not have the time to review them all, so i thought "If it is okay for recruiters to review and reject my application with AI then it should be okay for me to apply to the jobs with an AI right?" and so it began. and also one more thing, I thought why do recruiters post jobs in Entry Level with 8-9 Years of experience shouldn't entry level be 0-2 Years ? it has always frustated me and dont even get me started on ghost hiring, so here I'm where injustice prevails, a man caped in black, fighting the darkness, I'm Justice, I'm Batman 😅. aight enough story lets get to the point.
+### STARK-on-AI LinkedIn Job Automation Bot
 
-How to Run?
-This app requires you to have Python 3 at least. Download the latest version of Python from https://www.python.org. and google chrome
+An automated LinkedIn job application platform featuring a real-time web interface, live status monitoring dashboard, intelligent candidate profile parser, resume screening question solver, and support for both 1-Click **Easy Apply** and **Company Website** career portals.
 
-You need to run first_run.bat and give it your credentials (don't worry, everything stays in your system; you can give your details).
+---
 
-PS: All your details will be saved in the user-config.txt file created from first_run.bat (remember to delete it before sharing this app to someone if you're doing so locally).
+### Key Features
+- **Modern Web Dashboard**: Real-time status reporting, live application counter, and evaluation logs.
+- **Continuous Job Search & Application**: Scans LinkedIn search pages, scrolls virtualized job cards, and processes open positions continuously.
+- **Smart Already-Applied Detection**: Automatically detects jobs already submitted on LinkedIn and displays status banners in clear English.
+- **Dual Application Modes**:
+  - `Easy Apply`: Automated 1-click LinkedIn multi-step application wizards.
+  - `Company Website`: Automates external career portals and ATS forms (Greenhouse, Lever, Workday, etc.).
+  - `Both`: Seamlessly handles both native and external job listings.
+- **AI-Powered Screening Question Solver**: Analyzes candidate resume and auto-answers complex job application screening questions.
+- **Strict Role & Experience Filtering**: Matches jobs precisely to target tech stacks while filtering out irrelevant roles and senior positions.
 
-Once your details are captured in first_run.bat, this app should do its job (i.e., getting you a job 😂... aight, jokes apart). This app will open a Selenium window and execute the code which automatically applies for the LinkedIn jobs which has EasyApply enabled and no other jobs.
+---
 
-PS: I hope you have already applied for a few jobs on linkedin for which you might have filled in your details along with your updated resume, try to update these details on linkedin itself and check if you have your updated resume on LinkedIn before starting the app.
+### Prerequisites
+- Python 3.10+
+- Google Chrome installed
 
-Don't worry, you don't have to run the first_run.bat every time. Instead, once your details are filled, you can run the run.bat file every time you want to run this application.
+---
 
-If the app fails or an error is encountered, check the following:
+### Quick Start
 
-5.1. The job application limit is reached in LinkedIn (50 Applications per day). You can check it by logging in to your LinkedIn app and try to apply for a job. If an error throws, then try applying the next day (IK the market is bad, bro 🥲 (bro is gender neutral 🗿) but you gotta wait 24 hours).
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/KaviiBarath/linkedin-job-ai.git
+   cd linkedin-job-ai
+   ```
 
-5.2. The app failed due to a network issue or something. Try restarting the app by executing the run.bat file. If it doesn't fix it, then pray 🥲.
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-If you want the Telegram notifications for the jobs that got applied, then you have to fill in the chat ID and Bot token. I have given the link to it in the app itself... aight, IK patience is not our strength for many of us (guilty myself). Here you go, here is the link: https://youtu.be/l5YDtSLGhqk?si=W92w_Nl6mfcgomID
+3. **Configure Settings:**
+   Copy `user_config.example.txt` to `user_config.txt` and fill in your details:
+   ```bash
+   cp user_config.example.txt user_config.txt
+   ```
+   Or simply launch the web setup interface.
 
-Known Issues:
-The app may sometimes get stuck on the application part, you can either restart the application manually or Use the Telegram Bot Functionality (ie. send "Restart" message from your Telegram Bot).
-
-Same applies for ending the current execution (ie. send "End" message from your telegram bot to end the current execution)
-
-Note: Yes, I know my app is following a brute-force approach which is not ideal but hey, first rule of programming: "if it works, don't touch it."
+4. **Launch Web Application:**
+   ```bash
+   python app.py
+   ```
+   Open your browser at `http://127.0.0.1:5001` to configure your roles, location, and start the automation bot!
