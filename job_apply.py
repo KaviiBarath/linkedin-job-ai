@@ -300,6 +300,14 @@ def init_driver():
         'intl.accept_languages': 'en-US,en'
     })
 
+    is_headless = sys.platform.startswith("linux") or os.environ.get("HEADLESS", "false").lower() == "true"
+    if is_headless:
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
     profile_dir = os.path.join(base_dir, "chrome_profile")
     os.makedirs(profile_dir, exist_ok=True)
@@ -314,6 +322,12 @@ def init_driver():
         fallback_options.add_argument("--start-maximized")
         fallback_options.add_argument("--disable-blink-features=AutomationControlled")
         fallback_options.add_argument("--lang=en-US")
+        if is_headless:
+            fallback_options.add_argument("--headless=new")
+            fallback_options.add_argument("--no-sandbox")
+            fallback_options.add_argument("--disable-dev-shm-usage")
+            fallback_options.add_argument("--disable-gpu")
+            fallback_options.add_argument("--window-size=1920,1080")
         drv = webdriver.Chrome(service=service, options=fallback_options)
 
     try:

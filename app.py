@@ -189,8 +189,9 @@ def submit_data():
     return redirect('/')
 
 if __name__ == '__main__':
-    # This check prevents the browser from opening twice
-    if not os.environ.get("WERKZEUG_RUN_MAIN"):
-        Timer(1, lambda: webbrowser.open_new("http://127.0.0.1:5001")).start()
+    port = int(os.environ.get("PORT", 5001))
+    # Only open browser automatically when running locally
+    if not os.environ.get("WERKZEUG_RUN_MAIN") and not os.environ.get("PORT"):
+        Timer(1, lambda: webbrowser.open_new(f"http://127.0.0.1:{port}")).start()
         
-    app.run(port=5001, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)

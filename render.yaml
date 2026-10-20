@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: linkedin-job-ai
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 5001
+      - key: HEADLESS
+        value: "true"
