@@ -13,7 +13,7 @@ app = Flask(__name__)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "user_config.txt")
 STATUS_FILE = os.path.join(BASE_DIR, "automation_status.json")
-BOT_SCRIPT = os.path.join(BASE_DIR, "run.py")
+BOT_SCRIPT = os.path.join(BASE_DIR, "job_apply.py")
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -101,8 +101,11 @@ def get_status():
         "summary_instruction": "Ready to launch automation."
     })
 
-@app.route('/submit', methods=['POST'])
+@app.route('/submit', methods=['GET', 'POST'])
 def submit_data():
+    if request.method == 'GET':
+        return redirect('/dashboard' if os.path.exists(STATUS_FILE) else '/')
+    
     if request.method == 'POST':
         try:
             # 1. Handle uploaded resume file or fallback
@@ -185,8 +188,10 @@ def submit_data():
             except Exception:
                 pass
             
-            # Launch automation runner in background
-            subprocess.Popen([sys.executable, BOT_SCRIPT], cwd=BASE_DIR)
+            # Launch automation runner in background with log redirection
+            log_path = os.path.join(BASE_DIR, "bot_execution.log")
+            log_f = open(log_path, "a", encoding="utf-8")
+            subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, stdout=log_f, stderr=log_f)
 
             # Redirect immediately to the live monitoring dashboard
             return redirect('/dashboard')
@@ -194,6 +199,48 @@ def submit_data():
         except Exception as e:
             return f"<div style='background:#000;color:#ff4b4b;padding:40px;font-family:sans-serif;'><h1>Error: {e}</h1><a href='/' style='color:#ccff00;'>Go Back</a></div>"
     return redirect('/')
+
+@app.route('/start', methods=['GET', 'POST'])
+def start_bot():
+    """Starts or restarts the LinkedIn automation bot immediately using saved config."""
+    config = parse_existing_config()
+    roles = config.get("roles", "java developer fresher")
+    location = config.get("location", "Chennai, Tamil Nadu, India")
+    apply_mode = config.get("apply_mode", "both")
+    mode_label = {
+        "easy_apply": "Easy Apply (LinkedIn Native)",
+        "company_website": "Company Website (External Portals + AI)",
+        "both": "Both (LinkedIn + Company Portals)"
+    }.get(apply_mode, apply_mode)
+
+    initial_status = {
+        "status": "RUNNING",
+        "start_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "end_time": None,
+        "role": roles,
+        "location": location,
+        "mode": mode_label,
+        "total_evaluated": 0,
+        "total_applied": 0,
+        "total_already_applied": 0,
+        "total_skipped": 0,
+        "current_evaluating": "Launching Chrome with Anti-Detection and Session Persistence...",
+        "applied_jobs": [],
+        "already_applied_jobs": [],
+        "skipped_jobs": [],
+        "summary_instruction": f"Automation active for '{roles}' in {location}."
+    }
+    try:
+        with open(STATUS_FILE, "w", encoding="utf-8") as sf:
+            json.dump(initial_status, sf, indent=2)
+    except Exception:
+        pass
+
+    log_path = os.path.join(BASE_DIR, "bot_execution.log")
+    log_f = open(log_path, "a", encoding="utf-8")
+    subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, stdout=log_f, stderr=log_f)
+
+    return redirect('/dashboard')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
