@@ -188,10 +188,11 @@ def submit_data():
             except Exception:
                 pass
             
-            # Launch automation runner in background with log redirection
-            log_path = os.path.join(BASE_DIR, "bot_execution.log")
-            log_f = open(log_path, "a", encoding="utf-8")
-            subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, stdout=log_f, stderr=log_f)
+            # Launch automation runner in foreground interactive console on desktop
+            creationflags = 0
+            if sys.platform == "win32":
+                creationflags = subprocess.CREATE_NEW_CONSOLE
+            subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, creationflags=creationflags)
 
             # Redirect immediately to the live monitoring dashboard
             return redirect('/dashboard')
@@ -236,9 +237,10 @@ def start_bot():
     except Exception:
         pass
 
-    log_path = os.path.join(BASE_DIR, "bot_execution.log")
-    log_f = open(log_path, "a", encoding="utf-8")
-    subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, stdout=log_f, stderr=log_f)
+    creationflags = 0
+    if sys.platform == "win32":
+        creationflags = subprocess.CREATE_NEW_CONSOLE
+    subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, creationflags=creationflags)
 
     return redirect('/dashboard')
 

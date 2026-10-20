@@ -287,10 +287,57 @@ def update_automation_status(updates):
 
 #----------------- Browser Initialization & Safe Window Management -----------------
 
+def bring_window_to_foreground(drv=None):
+    """Brings the Chrome automation window to the absolute front of the user's desktop."""
+    if sys.platform != "win32":
+        return
+    try:
+        if drv:
+            try:
+                drv.maximize_window()
+            except Exception:
+                pass
+        import ctypes
+        user32 = ctypes.windll.user32
+        
+        EnumWindows = user32.EnumWindows
+        EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+        GetWindowTextW = user32.GetWindowTextW
+        GetWindowTextLengthW = user32.GetWindowTextLengthW
+        IsWindowVisible = user32.IsWindowVisible
+
+        matched_hwnds = []
+
+        def foreach_window(hwnd, lParam):
+            if IsWindowVisible(hwnd):
+                length = GetWindowTextLengthW(hwnd)
+                if length > 0:
+                    buff = ctypes.create_unicode_buffer(length + 1)
+                    GetWindowTextW(hwnd, buff, length + 1)
+                    title = buff.value
+                    if any(t in title for t in ["LinkedIn", "Jobs", "Chrome"]):
+                        matched_hwnds.append(hwnd)
+            return True
+
+        EnumWindows(EnumWindowsProc(foreach_window), 0)
+
+        for hwnd in matched_hwnds:
+            try:
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE
+                user32.SetForegroundWindow(hwnd)
+                user32.BringWindowToTop(hwnd)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
 def init_driver():
-    """Initializes Chrome with Anti-Detection and Persistent Session Profile."""
+    """Initializes Chrome with Anti-Detection and Persistent Session Profile in full view."""
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
+    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--window-position=0,0")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
@@ -311,15 +358,27 @@ def init_driver():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     profile_dir = os.path.join(base_dir, "chrome_profile")
     os.makedirs(profile_dir, exist_ok=True)
+
+    # Clean up stale Chrome locks so profile directory is always safely accessible
+    for lock_name in ["SingletonLock", "SingletonCookie", "SingletonSocket", "lockfile"]:
+        lp = os.path.join(profile_dir, lock_name)
+        if os.path.exists(lp):
+            try:
+                os.remove(lp)
+            except Exception:
+                pass
+
     options.add_argument(f"--user-data-dir={profile_dir}")
 
     service = Service(ChromeDriverManager().install())
     try:
         drv = webdriver.Chrome(service=service, options=options)
     except Exception as e:
-        print(f"[!] Note on Chrome profile: {e}. Starting standard browser session...")
+        print(f"[!] Note on Chrome profile: {e}. Starting standard visible browser session...")
         fallback_options = webdriver.ChromeOptions()
         fallback_options.add_argument("--start-maximized")
+        fallback_options.add_argument("--window-size=1920,1080")
+        fallback_options.add_argument("--window-position=0,0")
         fallback_options.add_argument("--disable-blink-features=AutomationControlled")
         fallback_options.add_argument("--lang=en-US")
         if is_headless:
@@ -341,7 +400,77 @@ def init_driver():
     except Exception:
         pass
 
+    # Ensure browser window is visibly brought to front of desktop
+    bring_window_to_foreground(drv)
+
     return drv
+
+def visually_type_and_search(driver, query, location):
+    """
+    Visually navigates to LinkedIn Jobs, focuses the search inputs, and types the
+    role and location character by character so the user sees the automated action live.
+    """
+    try:
+        bring_window_to_foreground(driver)
+        print(f">> [LIVE] Opening LinkedIn Jobs & typing query: '{query}' in '{location}'...")
+        driver.get("https://www.linkedin.com/jobs/?locale=en_US")
+        bring_window_to_foreground(driver)
+        time.sleep(2.5)
+
+        kw_inputs = driver.find_elements(
+            By.XPATH,
+            "//input[contains(@id, 'jobs-search-box-keyword')] | "
+            "//input[contains(@class, 'jobs-search-box__text-input') and not(contains(@id, 'location'))] | "
+            "//input[@aria-label='Search by title, skill, or company'] | "
+            "//input[contains(@placeholder, 'Search job') or contains(@placeholder, 'Search by title')]"
+        )
+
+        loc_inputs = driver.find_elements(
+            By.XPATH,
+            "//input[contains(@id, 'jobs-search-box-location')] | "
+            "//input[contains(@class, 'jobs-search-box__text-input') and contains(@id, 'location')] | "
+            "//input[@aria-label='City, state, or zip code'] | "
+            "//input[contains(@placeholder, 'City, state') or contains(@placeholder, 'location')]"
+        )
+
+        typed_kw = False
+        if kw_inputs:
+            for kw in kw_inputs:
+                if kw.is_displayed():
+                    try:
+                        driver.execute_script("arguments[0].style.outline = '3px solid #ccff00';", kw)
+                        kw.clear()
+                        for ch in query:
+                            kw.send_keys(ch)
+                            time.sleep(0.04)
+                        time.sleep(0.4)
+                        driver.execute_script("arguments[0].style.outline = '';", kw)
+                        typed_kw = True
+                        break
+                    except Exception:
+                        pass
+
+        if loc_inputs:
+            for loc in loc_inputs:
+                if loc.is_displayed():
+                    try:
+                        driver.execute_script("arguments[0].style.outline = '3px solid #ccff00';", loc)
+                        loc.clear()
+                        for ch in str(location):
+                            loc.send_keys(ch)
+                            time.sleep(0.03)
+                        time.sleep(0.4)
+                        driver.execute_script("arguments[0].style.outline = '';", loc)
+                        if typed_kw:
+                            loc.send_keys(Keys.ENTER)
+                            time.sleep(2.5)
+                        break
+                    except Exception:
+                        pass
+        return True
+    except Exception as e:
+        print(f"   [!] Visual search preview notice: {e}")
+        return False
 
 def ensure_active_window():
     """Ensures Selenium always operates on an active, open window handle, preventing crashes."""
@@ -2245,8 +2374,17 @@ def process_page_jobs(target_role=None, state: Any = None, seen_keys: Any = None
             except Exception:
                 pass
 
-            # 3. Scroll card into view and click title link
-            driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", card)
+            # 3. Scroll card into view, visibly highlight it for the user, and click title link
+            try:
+                driver.execute_script(
+                    "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});"
+                    "arguments[0].style.outline = '3px solid #ccff00';"
+                    "arguments[0].style.boxShadow = '0 0 18px rgba(204, 255, 0, 0.7)';"
+                    "arguments[0].style.transition = 'all 0.25s ease';",
+                    card
+                )
+            except Exception:
+                pass
             time.sleep(0.5)
             if title_link:
                 click_element_safe(title_link)
@@ -2599,8 +2737,12 @@ def main():
             else:
                 search_url = f"https://www.linkedin.com/jobs/search/?keywords={encoded_role}&location={encoded_loc}{exp_filter}&locale=en_US"
 
+            # 1. Visually navigate and type the search in the LinkedIn search bar live
+            visually_type_and_search(driver, search_query, LOCATION)
+            # 2. Open the filtered URL to enforce exact Easy Apply and Experience filters
             driver.get(search_url)
-            time.sleep(4)
+            bring_window_to_foreground(driver)
+            time.sleep(3)
 
             # Turn ON LinkedIn Job Alert for this search if not already enabled
             enable_job_search_alert(search_query)
