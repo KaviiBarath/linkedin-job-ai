@@ -1,0 +1,20 @@
+# Sensitive personal credentials & session
+user_config.txt
+chrome_profile/
+automation_status.json
+uploads/*.pdf
+!uploads/.gitkeep
+
+# IDE / tool caches
+.aider-desk/
+.vscode/
+
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Duplicate unzipped folder
+LINKEDIN-AUTOMATION/

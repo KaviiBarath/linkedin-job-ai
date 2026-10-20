@@ -1,0 +1,14 @@
+API_KEY                  	: 
+USER_ID                  	: your_email@example.com
+PASSWORD                 	: your_linkedin_password
+ROLES                    	: java developer fresher
+INPUT_RESUME_PATH        	: 
+LOCATION                 	: Chennai, Tamil Nadu, India
+APPLY_MODE               	: easy_apply
+YEARS                    	: 0
+MONTHS                   	: 0
+CURRENT_LPA              	: 0
+EXPECTED_LPA             	: 4.5 LPA
+NOTICE_PERIOD_DAYS       	: 0
+LINKS                    	: 
+JOB_MODE                 	: Fresher

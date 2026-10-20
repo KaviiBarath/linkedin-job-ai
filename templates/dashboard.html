@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STARK AI - Live Job Application Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-canvas: #070709;
+            --surface-card: #0f0f13;
+            --surface-inner: #15151c;
+            --border-subtle: #23232e;
+            --border-highlight: #383846;
+            --accent-lime: #ccff00;
+            --accent-emerald: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-amber: #f59e0b;
+            --text-primary: #ffffff;
+            --text-secondary: #9da0b3;
+            --text-muted: #626575;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            padding: 28px 20px 60px;
+            background-image: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(204, 255, 0, 0.08), transparent 70%),
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05), transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .dashboard-container {
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        /* Top Header Bar */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(12px);
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-symbol {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #ccff00, #10b981);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-size: 22px;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 0 20px rgba(204, 255, 0, 0.3);
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-title span {
+            color: var(--accent-lime);
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(204, 255, 0, 0.1);
+            color: var(--accent-lime);
+            border: 1px solid rgba(204, 255, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .status-badge.completed {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 10px currentColor;
+            animation: pulse 1.6s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .back-link-btn {
+            background: var(--surface-inner);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .back-link-btn:hover {
+            border-color: var(--accent-lime);
+            background: #20202a;
+        }
+
+        /* 4 Key Stat Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-highlight);
+        }
+
+        .metric-card.highlight {
+            border-color: rgba(204, 255, 0, 0.4);
+            background: linear-gradient(180deg, rgba(204, 255, 0, 0.05), var(--surface-card));
+        }
+
+        .metric-icon {
+            font-size: 22px;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .metric-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 34px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .metric-card.highlight .metric-value {
+            color: var(--accent-lime);
+            text-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
+        }
+
+        .metric-card.already-card {
+            border-color: rgba(59, 130, 246, 0.4);
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), var(--surface-card));
+        }
+
+        .metric-card.already-card .metric-value {
+            color: #60a5fa;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .metric-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-subtext {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Target Configuration Banner */
+        .config-banner {
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .config-pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .config-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--surface-inner);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #d1d5db;
+        }
+
+        .config-pill strong {
+            color: #fff;
+        }
+
+        /* Live Activity Terminal Bar */
+        .activity-bar {
+            background: #0d0d12;
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .activity-text {
+            color: var(--accent-lime);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .activity-spin {
+            animation: spin 2s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Final Completion Instruction Modal/Box */
+        .completion-banner {
+            display: none;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(204, 255, 0, 0.1));
+            border: 1.5px solid var(--accent-emerald);
+            border-radius: 18px;
+            padding: 26px 28px;
+            margin-bottom: 24px;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .completion-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .completion-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--accent-emerald);
+        }
+
+        .completion-msg {
+            color: #e2e8f0;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .completion-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn-action-primary {
+            background: var(--accent-lime);
+            color: #000;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-primary:hover {
+            background: #bce600;
+            transform: translateY(-1px);
+        }
+
+        .btn-action-secondary {
+            background: var(--surface-inner);
+            color: #fff;
+            border: 1px solid var(--border-subtle);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-secondary:hover {
+            border-color: #fff;
+        }
+
+        /* Applied Jobs Table Section */
+        .section-panel {
+            background: var(--surface-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .section-heading {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-count {
+            background: var(--surface-inner);
+            border: 1px solid var(--border-subtle);
+            color: var(--accent-lime);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+
+        /* Custom Table Styling */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        th {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 8px 16px;
+            text-align: left;
+            border: none;
+        }
+
+        tbody tr {
+            background: var(--surface-inner);
+            border-radius: 10px;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        tbody tr:hover {
+            background: #1b1b24;
+            transform: scale(1.002);
+        }
+
+        td {
+            padding: 14px 16px;
+            font-size: 13px;
+            color: #d1d5db;
+            border: none;
+        }
+
+        td:first-child {
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            width: 40px;
+        }
+
+        td:last-child {
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+
+        .job-title-cell {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .company-cell {
+            color: #a0a4b8;
+        }
+
+        .method-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+
+        .method-pill.company {
+            background: rgba(204, 255, 0, 0.1);
+            color: var(--accent-lime);
+            border-color: rgba(204, 255, 0, 0.25);
+        }
+
+        .status-pill-success {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-emerald);
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .status-pill-already {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .empty-row {
+            text-align: center;
+            padding: 36px 16px !important;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Skipped / Filtered Roles Collapsible */
+        details.filter-accordion {
+            margin-top: 16px;
+            background: var(--surface-inner);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 12px 18px;
+        }
+
+        details.filter-accordion summary {
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            user-select: none;
+        }
+
+        details.filter-accordion summary:hover {
+            color: #fff;
+        }
+
+        .skipped-list {
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+            list-style: none;
+        }
+
+        .skipped-item {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .skipped-item strong {
+            color: #d1d5db;
+        }
+
+        .skipped-reason {
+            color: #eab308;
+            font-size: 11px;
+        }
+
+        @media (max-width: 680px) {
+            .top-nav {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+
+    <!-- Top Navigation -->
+    <header class="top-nav">
+        <div class="brand-block">
+            <div class="logo-symbol">S</div>
+            <div>
+                <div class="brand-title">STARK <span>AUTOMATION</span></div>
+                <div class="brand-subtitle">Real-Time LinkedIn Application Tracker</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="status-badge" id="bot_status_badge">
+                <span class="pulse-dot"></span>
+                <span id="bot_status_text">INITIALIZING</span>
+            </div>
+            <a href="/" class="back-link-btn">⚙️ Configure</a>
+        </div>
+    </header>
+
+    <!-- Key Metrics Grid -->
+    <section class="metrics-grid">
+        <div class="metric-card highlight">
+            <span class="metric-icon">🚀</span>
+            <div class="metric-value" id="count_applied">0</div>
+            <div class="metric-label">Newly Applied (This Run)</div>
+            <div class="metric-subtext">Verified & 100% Submitted</div>
+        </div>
+
+        <div class="metric-card already-card">
+            <span class="metric-icon">✨</span>
+            <div class="metric-value" id="count_already_applied">0</div>
+            <div class="metric-label">Already Applied on LinkedIn</div>
+            <div class="metric-subtext">Previously submitted roles</div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-icon">🎯</span>
+            <div class="metric-value" id="count_evaluated">0</div>
+            <div class="metric-label">Total Jobs Evaluated</div>
+            <div class="metric-subtext">Scanned on LinkedIn search pages</div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-icon">🛡️</span>
+            <div class="metric-value" id="count_skipped">0</div>
+            <div class="metric-label">Skipped (Irrelevant / Senior)</div>
+            <div class="metric-subtext">Filtered out conflicting tech & seniors</div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-icon">⏱️</span>
+            <div class="metric-value" id="elapsed_timer">00:00</div>
+            <div class="metric-label">Elapsed Run Time</div>
+            <div class="metric-subtext" id="status_timestamp">Started just now</div>
+        </div>
+    </section>
+
+    <!-- Configuration Context Banner -->
+    <div class="config-banner">
+        <div class="config-pill-group">
+            <div class="config-pill">🎯 Role: <strong id="cfg_role">{{ config.roles if config else 'Java Developer Fresher' }}</strong></div>
+            <div class="config-pill">📍 Location: <strong id="cfg_location">{{ config.location if config else 'Chennai, Tamil Nadu, India' }}</strong></div>
+            <div class="config-pill">⚡ Mode: <strong id="cfg_mode">{{ config.apply_mode if config else 'Both' }}</strong></div>
+            <div class="config-pill">🎓 Route: <strong id="cfg_route">{{ config.job_mode if config else 'Fresher' }}</strong></div>
+        </div>
+        <div class="config-pill">🔔 LinkedIn Alert: <strong>AUTO-ACTIVATED ✓</strong></div>
+    </div>
+
+    <!-- Final Completion & Instruction Banner -->
+    <div class="completion-banner" id="completion_banner">
+        <div class="completion-header">
+            <span style="font-size: 26px;">🎉</span>
+            <div class="completion-title">AUTOMATION PROTOCOL COMPLETE</div>
+        </div>
+        <div class="completion-msg" id="completion_instruction_text">
+            All matching jobs for your target role have been processed and submitted accurately. No errors occurred.
+        </div>
+        <div class="completion-actions">
+            <a href="/" class="btn-action-primary">← Return to Form & Configure Next Role</a>
+            <button class="btn-action-secondary" onclick="window.print()">🖨️ Print Application Report</button>
+        </div>
+    </div>
+
+    <!-- Live Evaluating Terminal Feed -->
+    <div class="activity-bar">
+        <div class="activity-text">
+            <span class="activity-spin" id="activity_spinner">⚙️</span>
+            <span id="current_activity_label">Connecting to LinkedIn & scanning candidate matches...</span>
+        </div>
+        <span style="color: var(--text-muted); font-size: 11px;">AUTO-REFRESH: 1.5s</span>
+    </div>
+
+    <!-- Applied Jobs Table Panel -->
+    <section class="section-panel">
+        <div class="section-header">
+            <div class="section-heading">
+                <span>📋 Applied Jobs Log</span>
+                <span class="badge-count" id="table_badge_count">0 Applied</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted);">
+                100% verified submissions
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Job Title / Role</th>
+                        <th>Company Name</th>
+                        <th>Application Channel</th>
+                        <th>Time Submitted</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="applied_table_body">
+                    <tr>
+                        <td colspan="6" class="empty-row">Scanning LinkedIn for matching jobs...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Collapsible Skipped / Filtered Roles List -->
+        <details class="filter-accordion" id="skipped_accordion">
+            <summary>🛡️ View Filtered / Skipped Roles (<span id="skipped_summary_count">0</span>)</summary>
+            <ul class="skipped-list" id="skipped_list_container">
+                <li style="padding: 6px 0; color: var(--text-muted);">No jobs skipped yet.</li>
+            </ul>
+        </details>
+    </section>
+
+</div>
+
+<script>
+    let startTime = Date.now();
+    let pollInterval = null;
+    let isFinished = false;
+
+    // Timer updater
+    function updateTimer() {
+        if (isFinished) return;
+        const diffSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const mins = String(Math.floor(diffSeconds / 60)).padStart(2, '0');
+        const secs = String(diffSeconds % 60).padStart(2, '0');
+        document.getElementById('elapsed_timer').innerText = `${mins}:${secs}`;
+    }
+    setInterval(updateTimer, 1000);
+
+    // Live Status Poller
+    async function fetchAutomationStatus() {
+        try {
+            const res = await fetch('/status');
+            if (!res.ok) return;
+            const data = await res.json();
+
+            // Update stats
+            const newlyApplied = data.total_applied || 0;
+            const alreadyApplied = data.total_already_applied || 0;
+            const totalMatchingApplied = newlyApplied + alreadyApplied;
+
+            document.getElementById('count_applied').innerText = newlyApplied;
+            if (document.getElementById('count_already_applied')) {
+                document.getElementById('count_already_applied').innerText = alreadyApplied;
+            }
+            document.getElementById('count_evaluated').innerText = data.total_evaluated || 0;
+            document.getElementById('count_skipped').innerText = data.total_skipped || 0;
+            document.getElementById('table_badge_count').innerText = `${totalMatchingApplied} Applied Roles (${newlyApplied} New, ${alreadyApplied} Previous)`;
+            document.getElementById('skipped_summary_count').innerText = data.total_skipped || 0;
+
+            if (data.role) document.getElementById('cfg_role').innerText = data.role;
+            if (data.location) document.getElementById('cfg_location').innerText = data.location;
+            if (data.mode) document.getElementById('cfg_mode').innerText = data.mode;
+
+            // Update current activity text
+            if (data.current_evaluating) {
+                document.getElementById('current_activity_label').innerText = `Active: ${data.current_evaluating}`;
+            }
+
+            // Update Status Badge
+            const badge = document.getElementById('bot_status_badge');
+            const badgeText = document.getElementById('bot_status_text');
+            const spinner = document.getElementById('activity_spinner');
+
+            if (data.status === 'COMPLETED') {
+                isFinished = true;
+                badge.className = 'status-badge completed';
+                badgeText.innerText = 'COMPLETED ✓';
+                spinner.style.display = 'none';
+                document.getElementById('current_activity_label').innerText = 'All matching roles processed successfully.';
+
+                // Show Final Completion Banner with detailed instructions
+                const banner = document.getElementById('completion_banner');
+                banner.style.display = 'block';
+
+                const instructionText = document.getElementById('completion_instruction_text');
+                const roleName = data.role || 'assigned role';
+                const locName = data.location || 'Chennai';
+
+                if (newlyApplied === 0 && alreadyApplied > 0) {
+                    instructionText.innerHTML = `
+                        <div style="margin-bottom: 8px; font-size: 15px; color: #60a5fa; font-weight: 700;">
+                            ℹ️ You have already applied for all matching jobs!
+                        </div>
+                        Every matching position for <strong>${roleName}</strong> in <strong>${locName}</strong> was already submitted previously by you on LinkedIn.<br>
+                        Total previously submitted applications identified: <strong>${alreadyApplied}</strong>. No new unapplied jobs remain on LinkedIn for this search.
+                    `;
+                } else if (newlyApplied > 0) {
+                    instructionText.innerHTML = `
+                        <strong>✅ Protocol Report:</strong> Successfully applied to <strong>${newlyApplied} new jobs</strong> matching <strong>${roleName}</strong> in <strong>${locName}</strong>.<br>
+                        ${alreadyApplied > 0 ? `(You have also already applied to <strong>${alreadyApplied} other matching jobs</strong> previously).<br>` : ''}
+                        Every application was analyzed against your resume (<code>Barath_R_Resume.pdf</code>), screening questions were filled automatically, and submissions were verified without errors.
+                    `;
+                } else {
+                    instructionText.innerHTML = `
+                        <strong>🔍 Search Completed:</strong> Evaluated all jobs for <strong>${roleName}</strong> in <strong>${locName}</strong>.<br>
+                        All available jobs on this search were either already applied or skipped due to experience level filters.
+                    `;
+                }
+
+                if (pollInterval) clearInterval(pollInterval);
+            } else if (data.status === 'RUNNING') {
+                badge.className = 'status-badge';
+                badgeText.innerText = 'RUNNING';
+            }
+
+            // Render Applied Jobs Table (combining newly applied and already applied)
+            const tbody = document.getElementById('applied_table_body');
+            const combinedJobs = [
+                ...(data.applied_jobs || []),
+                ...(data.already_applied_jobs || [])
+            ];
+
+            if (combinedJobs.length > 0) {
+                tbody.innerHTML = combinedJobs.map((job, idx) => `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td class="job-title-cell">${escapeHtml(job.title)}</td>
+                        <td class="company-cell">${escapeHtml(job.company || 'Company')}</td>
+                        <td>
+                            <span class="method-pill ${job.mode && job.mode.includes('Company') ? 'company' : ''}">
+                                ${escapeHtml(job.mode || 'Easy Apply')}
+                            </span>
+                        </td>
+                        <td>${escapeHtml(job.time || '-')}</td>
+                        <td>
+                            <span class="${job.status && job.status.includes('ALREADY') ? 'status-pill-already' : 'status-pill-success'}">
+                                ✓ ${escapeHtml(job.status || 'APPLIED')}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } else if (!isFinished) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-row">Scanning LinkedIn for matching jobs...</td></tr>`;
+            }
+
+            // Render Skipped Jobs Accordion
+            const skippedContainer = document.getElementById('skipped_list_container');
+            if (data.skipped_jobs && data.skipped_jobs.length > 0) {
+                skippedContainer.innerHTML = data.skipped_jobs.map(item => `
+                    <li class="skipped-item">
+                        <strong>${escapeHtml(item.title)}</strong>
+                        <span class="skipped-reason">${escapeHtml(item.reason)}</span>
+                    </li>
+                `).join('');
+            }
+
+        } catch (e) {
+            console.warn('Status poll note:', e);
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Start polling immediately and every 1.5s
+    fetchAutomationStatus();
+    pollInterval = setInterval(fetchAutomationStatus, 1500);
+</script>
+
+</body>
+</html>
