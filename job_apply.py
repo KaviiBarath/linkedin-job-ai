@@ -360,7 +360,7 @@ def init_driver():
     os.makedirs(profile_dir, exist_ok=True)
 
     # Clean up stale Chrome locks so profile directory is always safely accessible
-    for lock_name in ["SingletonLock", "SingletonCookie", "SingletonSocket", "lockfile"]:
+    for lock_name in ["SingletonLock", "SingletonCookie", "SingletonSocket", "lockfile", "DevToolsActivePort"]:
         lp = os.path.join(profile_dir, lock_name)
         if os.path.exists(lp):
             try:
@@ -576,13 +576,34 @@ def login_to_linkedin(user_id, password):
             break
 
     if username_input and password_input:
-        print(">> [LOGIN] Entering LinkedIn credentials...")
+        print(f">> [LOGIN] Visually entering credentials for {user_id}...")
+        update_automation_status({"current_evaluating": f"Logging into LinkedIn as {user_id}..."})
+        try:
+            driver.execute_script("arguments[0].style.outline = '3px solid #ccff00';", username_input)
+        except Exception:
+            pass
         username_input.clear()
-        username_input.send_keys(user_id)
-        time.sleep(0.5)
+        for ch in user_id:
+            username_input.send_keys(ch)
+            time.sleep(0.03)
+        try:
+            driver.execute_script("arguments[0].style.outline = '';", username_input)
+        except Exception:
+            pass
+        time.sleep(0.4)
 
+        try:
+            driver.execute_script("arguments[0].style.outline = '3px solid #ccff00';", password_input)
+        except Exception:
+            pass
         password_input.clear()
-        password_input.send_keys(password)
+        for ch in password:
+            password_input.send_keys(ch)
+            time.sleep(0.03)
+        try:
+            driver.execute_script("arguments[0].style.outline = '';", password_input)
+        except Exception:
+            pass
         time.sleep(0.5)
 
         submit_btns = driver.find_elements(
