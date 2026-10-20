@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STARK 🚀 | LinkedIn Autonomous Job Applicant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #0d0d0f;
+            --input-bg: #18181b;
+            --input-border: #2c2c30;
+            --accent-lime: #ccff00;
+            --accent-lime-hover: #b8e600;
+            --accent-lime-glow: rgba(204, 255, 0, 0.25);
+            --text-primary: #ffffff;
+            --text-secondary: #9e9ea7;
+            --text-dim: #606068;
+            --danger: #ff4b4b;
+            --card-border: #222226;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 540px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 36px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 1px rgba(204, 255, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .logo-title span {
+            color: var(--accent-lime);
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .mandatory {
+            color: var(--danger);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        /* 3 Apply Mode Boxes */
+        .apply-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .mode-card {
+            position: relative;
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: 14px;
+            padding: 14px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            user-select: none;
+        }
+
+        .mode-card:hover {
+            border-color: #44444a;
+            transform: translateY(-2px);
+        }
+
+        .mode-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .mode-card.active {
+            border-color: var(--accent-lime);
+            background: rgba(204, 255, 0, 0.05);
+            box-shadow: 0 0 18px var(--accent-lime-glow);
+        }
+
+        .mode-icon {
+            font-size: 20px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .mode-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 3px;
+        }
+
+        .mode-desc {
+            font-size: 10px;
+            color: var(--text-dim);
+            line-height: 1.3;
+        }
+
+        .mode-card.active .mode-title {
+            color: var(--accent-lime);
+        }
+
+        /* Job Search Mode Pills (Fresher / Experienced) */
+        .segmented-control {
+            display: flex;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .segmented-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 9px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .segmented-option input {
+            display: none;
+        }
+
+        .segmented-option.active {
+            background: #27272a;
+            color: var(--accent-lime);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Form Inputs */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 13px 16px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.25s ease;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--accent-lime);
+            outline: none;
+            background-color: #202024;
+            box-shadow: 0 0 0 3px var(--accent-lime-glow);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            margin: 0;
+            width: auto;
+        }
+
+        .toggle-password:hover {
+            color: #fff;
+        }
+
+        /* Location quick pills */
+        .pills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 8px;
+        }
+
+        .pill-btn {
+            background: #1e1e24;
+            border: 1px solid #303038;
+            color: #b0b0ba;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: auto;
+            margin: 0;
+        }
+
+        .pill-btn:hover {
+            border-color: var(--accent-lime);
+            color: #fff;
+            background: #282830;
+        }
+
+        /* Resume Upload Box */
+        .upload-dropzone {
+            border: 1.5px dashed var(--input-border);
+            background: var(--input-bg);
+            border-radius: 14px;
+            padding: 18px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .upload-dropzone:hover,
+        .upload-dropzone.dragover {
+            border-color: var(--accent-lime);
+            background: rgba(204, 255, 0, 0.03);
+        }
+
+        .upload-dropzone input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            font-size: 26px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .upload-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .upload-hint {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+
+        .current-resume-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(204, 255, 0, 0.1);
+            border: 1px solid rgba(204, 255, 0, 0.3);
+            color: var(--accent-lime);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Experience section */
+        .hidden-exp {
+            display: none !important;
+        }
+
+        .exp-inputs {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .exp-col {
+            flex: 1;
+        }
+
+        .two-col-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .route-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(204, 255, 0, 0.06);
+            border: 1px solid rgba(204, 255, 0, 0.25);
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-size: 12px;
+            color: var(--accent-lime);
+            margin-top: 8px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .route-alert-box {
+            display: none;
+            background: rgba(255, 170, 0, 0.08);
+            border: 1px solid rgba(255, 170, 0, 0.4);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        .route-alert-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffaa00;
+            margin-bottom: 5px;
+        }
+
+        .route-alert-msg {
+            font-size: 11px;
+            color: #d1d1d6;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .alert-action-btn {
+            background: #ffaa00;
+            color: #000;
+            border: none;
+            border-radius: 7px;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .alert-action-btn:hover {
+            background: #ffbb22;
+            transform: translateY(-1px);
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--card-border);
+            margin: 24px 0 20px 0;
+        }
+
+        /* Action button */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--accent-lime);
+            color: #000;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            background-color: var(--accent-lime-hover);
+            box-shadow: 0 8px 25px var(--accent-lime-glow);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .status-note {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="logo-title">STARK <span>🚀</span></h1>
+            <p class="subtitle">Autonomous AI LinkedIn & Company Job Applicant</p>
+        </div>
+
+        
+        <!-- Netlify Cloud Engine Connector Bar -->
+        <div class="engine-bar" id="engine_bar" style="display:none; background:#18181b; border:1px solid #27272a; border-radius:12px; padding:12px 14px; margin-bottom:20px; font-size:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#9e9ea7; font-weight:600;">🌐 Netlify Connected Portal</span>
+                <span id="engine_status_indicator" style="color:#ccff00; font-weight:700;">● Checking Engine...</span>
+            </div>
+            <div style="margin-top:8px; display:flex; gap:8px;">
+                <input type="text" id="engine_url_input" placeholder="Automation Engine URL (e.g. http://localhost:5001 or Cloud URL)" style="flex:1; background:#0d0d0f; border:1px solid #3f3f46; color:#fff; padding:6px 10px; border-radius:8px; font-size:11px;" value="http://localhost:5001">
+                <button type="button" onclick="saveEngineUrl()" style="background:#ccff00; color:#000; border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer;">Connect</button>
+            </div>
+        </div>
+
+        <form action="/submit" method="POST" enctype="multipart/form-data" id="starkForm">
+
+            <!-- 1. THREE APPLICATION MODE BOXES -->
+            <label class="section-label">Select Application Mode <span class="mandatory">*</span></label>
+            <div class="apply-mode-grid">
+                <!-- Box 1: Easy Apply -->
+                <div class="mode-card active" id="card_easy" onclick="selectApplyMode('easy_apply')">
+                    <input type="radio" name="apply_mode" id="mode_easy" value="easy_apply" checked>
+                    <span class="mode-icon">⚡</span>
+                    <div class="mode-title">Easy Apply</div>
+                    <div class="mode-desc">1-Click LinkedIn Native Wizard</div>
+                </div>
+
+                <!-- Box 2: Company Website -->
+                <div class="mode-card " id="card_company" onclick="selectApplyMode('company_website')">
+                    <input type="radio" name="apply_mode" id="mode_company" value="company_website" >
+                    <span class="mode-icon">🌐</span>
+                    <div class="mode-title">Company Site</div>
+                    <div class="mode-desc">Direct Career Portals + AI Auto-Fill</div>
+                </div>
+
+                <!-- Box 3: Both -->
+                <div class="mode-card " id="card_both" onclick="selectApplyMode('both')">
+                    <input type="radio" name="apply_mode" id="mode_both" value="both" >
+                    <span class="mode-icon">🔄</span>
+                    <div class="mode-title">Both</div>
+                    <div class="mode-desc">Apply on LinkedIn & External Portals</div>
+                </div>
+            </div>
+
+            <!-- 2. JOB SEARCH MODE (Fresher / Experienced) -->
+            <div class="segmented-control">
+                <div class="segmented-option active" id="tab_fresher" onclick="setJobMode('Fresher')">
+                    <input type="radio" name="job_mode" id="job_mode_fresher" value="Fresher" checked>
+                    🎓 Fresher (Entry Level)
+                </div>
+                <div class="segmented-option " id="tab_exp" onclick="setJobMode('Experienced')">
+                    <input type="radio" name="job_mode" id="job_mode_exp" value="Experienced" >
+                    💼 Experienced
+                </div>
+            </div>
+
+            <!-- Dynamic Experience Fields -->
+            <div class="form-group hidden-exp" id="experience_section">
+                <label>Total Experience</label>
+                <div class="exp-inputs">
+                    <div class="exp-col">
+                        <input type="number" name="years" id="exp_years" placeholder="Years" min="0" value="0">
+                    </div>
+                    <div class="exp-col">
+                        <input type="number" name="months" id="exp_months" placeholder="Months" min="0" max="11" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. TARGET ROLES WITH SMART ROUTING -->
+            <div class="form-group">
+                <label>Target Roles <span class="mandatory">*</span></label>
+                <input type="text" name="roles" id="roles_input" placeholder="e.g. Java Developer Fresher, Python Developer Fresher" value="java developer fresher" required oninput="evaluateRouteMatch()">
+                
+                <!-- Active Route Indicator Badge -->
+                <div class="route-badge" id="route_badge">
+                    <span id="route_badge_icon">🎓</span>
+                    <span id="route_badge_text">Strict Fresher Route: Filtering strictly for Entry Level (0-1 yr) roles</span>
+                </div>
+
+                <!-- Interactive Route Mismatch Alert Box -->
+                <div class="route-alert-box" id="route_alert_box">
+                    <div class="route-alert-header">
+                        <span>⚠️</span>
+                        <span id="route_alert_title">Route Alert Detected</span>
+                    </div>
+                    <div class="route-alert-msg" id="route_alert_desc">
+                        You selected Fresher mode, but entered experienced criteria.
+                    </div>
+                    <button type="button" class="alert-action-btn" id="route_alert_btn" onclick="resolveRouteConflict()">⚡ Switch to Experienced Route</button>
+                </div>
+            </div>
+
+            <!-- 4. COMPENSATION (Current LPA & Expected LPA) -->
+            <div class="two-col-grid form-group">
+                <div>
+                    <label>Current LPA</label>
+                    <input type="text" name="current_lpa" id="current_lpa_input" placeholder="e.g. 0 or 3 LPA" value="0">
+                    <div class="pills-container" style="margin-top: 6px;">
+                        <button type="button" class="pill-btn" onclick="setQuickVal('current_lpa_input', '0')">0 (Fresher)</button>
+                        <button type="button" class="pill-btn" onclick="setQuickVal('current_lpa_input', '3 LPA')">3 LPA</button>
+                        <button type="button" class="pill-btn" onclick="setQuickVal('current_lpa_input', '5 LPA')">5 LPA</button>
+                    </div>
+                </div>
+                <div>
+                    <label>Expected LPA <span class="mandatory">*</span></label>
+                    <input type="text" name="expected_lpa" id="expected_lpa_input" placeholder="e.g. 4.5 LPA" value="4.5 LPA" required>
+                    <div class="pills-container" style="margin-top: 6px;">
+                        <button type="button" class="pill-btn" onclick="setQuickVal('expected_lpa_input', '4 LPA')">4 LPA</button>
+                        <button type="button" class="pill-btn" onclick="setQuickVal('expected_lpa_input', '6 LPA')">6 LPA</button>
+                        <button type="button" class="pill-btn" onclick="setQuickVal('expected_lpa_input', '8 LPA')">8 LPA</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. NOTICE PERIOD (DAYS) -->
+            <div class="form-group">
+                <label>Notice Period (Days) <span class="mandatory">*</span></label>
+                <input type="number" name="notice_period_days" id="notice_period_input" placeholder="0 for Immediate" min="0" value="0" required>
+                <div class="pills-container" style="margin-top: 6px;">
+                    <button type="button" class="pill-btn" onclick="setQuickVal('notice_period_input', '0')">⚡ Immediate (0 Days)</button>
+                    <button type="button" class="pill-btn" onclick="setQuickVal('notice_period_input', '15')">15 Days</button>
+                    <button type="button" class="pill-btn" onclick="setQuickVal('notice_period_input', '30')">30 Days</button>
+                    <button type="button" class="pill-btn" onclick="setQuickVal('notice_period_input', '60')">60 Days</button>
+                </div>
+            </div>
+
+            <!-- 5. LOCATION WITH QUICK SELECTION -->
+            <div class="form-group">
+                <label>Target Location / City <span class="mandatory">*</span></label>
+                <input type="text" name="location" id="location_input" list="location_suggestions" placeholder="e.g. Chennai, Tamil Nadu, India" value="Chennai, Tamil Nadu, India" required>
+                <datalist id="location_suggestions">
+                    <option value="Chennai, Tamil Nadu, India">
+                    <option value="Coimbatore, Tamil Nadu, India">
+                    <option value="Bangalore, Karnataka, India">
+                    <option value="Hyderabad, Telangana, India">
+                    <option value="Pune, Maharashtra, India">
+                    <option value="Remote">
+                </datalist>
+
+                <!-- Location Quick Select Pills -->
+                <div class="pills-container">
+                    <button type="button" class="pill-btn" onclick="setLocation('Chennai, Tamil Nadu, India')">📍 Chennai, Tamil Nadu</button>
+                    <button type="button" class="pill-btn" onclick="setLocation('Coimbatore, Tamil Nadu, India')">📍 Coimbatore, Tamil Nadu</button>
+                    <button type="button" class="pill-btn" onclick="setLocation('Bangalore, Karnataka, India')">📍 Bangalore</button>
+                    <button type="button" class="pill-btn" onclick="setLocation('Remote')">🌐 Remote</button>
+                </div>
+            </div>
+
+            <!-- 7. LINKEDIN CREDENTIALS -->
+            <div class="form-group">
+                <label>LinkedIn Email / Username <span class="mandatory">*</span></label>
+                <input type="text" name="user_id" placeholder="name@example.com" value="" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label>Password <span class="mandatory">*</span></label>
+                <div class="input-wrapper">
+                    <input type="password" name="password" id="password_input" placeholder="●●●●●●●●" value="" required autocomplete="current-password">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">👁️</button>
+                </div>
+            </div>
+
+            <!-- 6. RESUME UPLOAD BOX -->
+            <div class="form-group">
+                <label>Resume Document (PDF) <span class="mandatory">*</span></label>
+                <div class="upload-dropzone" id="dropzone">
+                    <input type="file" name="resume_file" id="resume_file" accept=".pdf,.doc,.docx" onchange="handleFileChosen(this)">
+                    <span class="upload-icon">📄</span>
+                    <div class="upload-title" id="upload_display_title">Click or Drag & Drop to Upload New Resume</div>
+                    <div class="upload-hint">Supported formats: .PDF, .DOCX (Max 10MB)</div>
+                    
+                    
+                </div>
+                <!-- Hidden fallback to preserve existing resume path -->
+                <input type="hidden" name="resume_path" id="resume_path_hidden" value="">
+            </div>
+
+            <!-- 7. GEMINI API KEY (OPTIONAL FOR AI SOLVER) -->
+            <div class="form-group">
+                <label>Gemini API Key (Optional - for AI Form Solving & Company Site Analysis)</label>
+                <input type="text" name="api_key" placeholder="AIzaSy..." value="">
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- START SUBMIT BUTTON -->
+            <button type="submit" class="submit-btn" id="start_btn">
+                <span>START AUTOMATION</span>
+                <span>🚀</span>
+            </button>
+
+            <p class="status-note">Session profile is saved persistently in <code>chrome_profile</code> to bypass 2FA once authenticated.</p>
+        </form>
+    </div>
+
+    <script>
+        // Apply Mode Selection
+        function selectApplyMode(mode) {
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+            if (mode === 'easy_apply') {
+                document.getElementById('card_easy').classList.add('active');
+                document.getElementById('mode_easy').checked = true;
+            } else if (mode === 'company_website') {
+                document.getElementById('card_company').classList.add('active');
+                document.getElementById('mode_company').checked = true;
+            } else if (mode === 'both') {
+                document.getElementById('card_both').classList.add('active');
+                document.getElementById('mode_both').checked = true;
+            }
+        }
+
+        // Job Search Mode Selection (Fresher / Experienced)
+        function setJobMode(mode) {
+            const fresherTab = document.getElementById('tab_fresher');
+            const expTab = document.getElementById('tab_exp');
+            const expSection = document.getElementById('experience_section');
+            const fresherRadio = document.getElementById('job_mode_fresher');
+            const expRadio = document.getElementById('job_mode_exp');
+
+            if (mode === 'Experienced') {
+                fresherTab.classList.remove('active');
+                expTab.classList.add('active');
+                expRadio.checked = true;
+                expSection.classList.remove('hidden-exp');
+                expSection.style.display = 'block';
+            } else {
+                expTab.classList.remove('active');
+                fresherTab.classList.add('active');
+                fresherRadio.checked = true;
+                expSection.classList.add('hidden-exp');
+                expSection.style.display = 'none';
+                const curLpa = document.getElementById('current_lpa_input');
+                if (curLpa && (!curLpa.value || curLpa.value === '')) {
+                    curLpa.value = '0';
+                }
+            }
+            evaluateRouteMatch();
+        }
+
+        // Quick set helper for input fields
+        function setQuickVal(inputId, val) {
+            const el = document.getElementById(inputId);
+            if (el) {
+                el.value = val;
+                el.style.borderColor = '#ccff00';
+                setTimeout(() => { el.style.borderColor = ''; }, 500);
+            }
+            if (inputId === 'roles_input') {
+                evaluateRouteMatch();
+            }
+        }
+
+        // Live Route & Keyword Evaluation with Smart Alert
+        function evaluateRouteMatch() {
+            const roleInput = document.getElementById('roles_input');
+            const roleVal = (roleInput ? roleInput.value : '').toLowerCase();
+            const expYears = parseInt(document.getElementById('exp_years').value || '0', 10);
+            const isFresherMode = document.getElementById('job_mode_fresher').checked;
+            
+            const badgeIcon = document.getElementById('route_badge_icon');
+            const badgeText = document.getElementById('route_badge_text');
+            const alertBox = document.getElementById('route_alert_box');
+            const alertTitle = document.getElementById('route_alert_title');
+            const alertDesc = document.getElementById('route_alert_desc');
+            const alertBtn = document.getElementById('route_alert_btn');
+
+            const seniorKeywords = ['senior', 'sr.', 'sr ', 'lead', 'principal', 'manager', 'architect', 'staff', 'years', 'experience', 'experienced'];
+            const hasSeniorKeyword = seniorKeywords.some(k => roleVal.includes(k));
+            const hasFresherKeyword = roleVal.includes('fresher') || roleVal.includes('intern') || roleVal.includes('entry');
+
+            if (isFresherMode) {
+                badgeIcon.textContent = '🎓';
+                badgeText.textContent = 'Strict Fresher Route: Filtering strictly for 0-1 yr Entry Level roles';
+                
+                if (hasSeniorKeyword || expYears > 0) {
+                    alertBox.style.display = 'block';
+                    alertTitle.textContent = 'Fresher Mode Alert: Experience Criteria Detected';
+                    alertDesc.textContent = `You selected 'Fresher' mode, but entered '${roleVal}' or ${expYears} yrs experience. Click below to activate Experienced Route, or STARK will strictly override and filter for Entry-Level openings.`;
+                    alertBtn.textContent = '⚡ Enable Experienced Route';
+                    alertBtn.onclick = () => {
+                        setJobMode('Experienced');
+                    };
+                } else {
+                    alertBox.style.display = 'none';
+                }
+            } else {
+                badgeIcon.textContent = '💼';
+                badgeText.textContent = `Experienced Route: Filtering for roles matching ${expYears || 1}+ Years experience`;
+                
+                if (hasFresherKeyword && expYears === 0) {
+                    alertBox.style.display = 'block';
+                    alertTitle.textContent = 'Experienced Mode Alert: Fresher Role Specified';
+                    alertDesc.textContent = "You selected 'Experienced' mode, but typed a 'Fresher' role with 0 years experience. Click below to activate the Fresher Route.";
+                    alertBtn.textContent = '🎓 Enable Fresher Route';
+                    alertBtn.onclick = () => {
+                        setJobMode('Fresher');
+                    };
+                } else {
+                    alertBox.style.display = 'none';
+                }
+            }
+        }
+
+        // Run evaluation on load
+        window.addEventListener('DOMContentLoaded', () => {
+            evaluateRouteMatch();
+            const expYearsInput = document.getElementById('exp_years');
+            if (expYearsInput) {
+                expYearsInput.addEventListener('input', evaluateRouteMatch);
+            }
+        });
+
+        // Quick set location
+        function setLocation(loc) {
+            const locInput = document.getElementById('location_input');
+            locInput.value = loc;
+            locInput.style.borderColor = '#ccff00';
+            setTimeout(() => {
+                locInput.style.borderColor = '';
+            }, 600);
+        }
+
+        // Toggle password show / hide
+        function togglePasswordVisibility() {
+            const pwd = document.getElementById('password_input');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+            } else {
+                pwd.type = 'password';
+            }
+        }
+
+        // Handle file selection preview
+        function handleFileChosen(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const sizeKb = Math.round(file.size / 1024);
+                const titleElem = document.getElementById('upload_display_title');
+                titleElem.innerHTML = `<span style="color: #ccff00;">✓ Selected:</span> ${file.name} (${sizeKb} KB)`;
+                
+                const existingBadge = document.getElementById('current_resume_badge');
+                if (existingBadge) {
+                    existingBadge.style.display = 'none';
+                }
+            }
+        }
+
+        // Drag and drop visual cues
+        const dropzone = document.getElementById('dropzone');
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+            }, false);
+        });
+
+        // Form submit visual state
+        document.getElementById('starkForm').addEventListener('submit', function() {
+            const btn = document.getElementById('start_btn');
+            btn.innerHTML = '<span>LAUNCHING AUTOMATION ENGINE...</span> <span>⏳</span>';
+            btn.style.opacity = '0.85';
+            btn.style.pointerEvents = 'none';
+        });
+    
+        // Netlify & Cloud Engine Bridge
+        function getBackendBaseUrl() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return '';
+            }
+            const stored = localStorage.getItem('stark_engine_url');
+            if (stored) return stored.replace(/\/+$/, '');
+            return 'http://localhost:5001';
+        }
+
+        function saveEngineUrl() {
+            const input = document.getElementById('engine_url_input');
+            if (input && input.value) {
+                const clean = input.value.trim().replace(/\/+$/, '');
+                localStorage.setItem('stark_engine_url', clean);
+                alert('Saved Automation Engine URL: ' + clean);
+                checkEngineHealth();
+            }
+        }
+
+        async function checkEngineHealth() {
+            const baseUrl = getBackendBaseUrl();
+            const indicator = document.getElementById('engine_status_indicator');
+            if (!indicator) return;
+            try {
+                const res = await fetch(baseUrl + '/status', { method: 'GET', mode: 'cors' });
+                if (res.ok) {
+                    indicator.textContent = '● Engine Online (Ready)';
+                    indicator.style.color = '#ccff00';
+                } else {
+                    indicator.textContent = '○ Engine Offline';
+                    indicator.style.color = '#ef4444';
+                }
+            } catch (e) {
+                indicator.textContent = '○ Engine Offline (Start py app.py)';
+                indicator.style.color = '#f59e0b';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const isExternalHost = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            const engineBar = document.getElementById('engine_bar');
+            if (isExternalHost && engineBar) {
+                engineBar.style.display = 'block';
+                const input = document.getElementById('engine_url_input');
+                if (input) {
+                    input.value = localStorage.getItem('stark_engine_url') || 'http://localhost:5001';
+                }
+                checkEngineHealth();
+            }
+
+            // Intercept form submit when on Netlify / external host
+            const form = document.getElementById('starkForm');
+            if (form && isExternalHost) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const btn = document.getElementById('start_btn');
+                    btn.innerHTML = '<span>DISPATCHING TO AUTOMATION ENGINE...</span> <span>⏳</span>';
+                    btn.style.opacity = '0.85';
+                    btn.style.pointerEvents = 'none';
+
+                    const baseUrl = getBackendBaseUrl();
+                    const formData = new FormData(form);
+                    try {
+                        const resp = await fetch(baseUrl + '/submit', {
+                            method: 'POST',
+                            body: formData,
+                            mode: 'cors'
+                        });
+                        window.location.href = '/dashboard.html';
+                    } catch (err) {
+                        alert('Could not connect to Automation Engine at ' + baseUrl + '\nMake sure "py app.py" or your cloud engine is running!');
+                        btn.innerHTML = '<span>START AUTOMATION</span> <span>🚀</span>';
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
+                    }
+                });
+            }
+        });
+
+    </script>
+</body>
+
+</html>
