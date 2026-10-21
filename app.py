@@ -244,6 +244,48 @@ def start_bot():
 
     return redirect('/dashboard')
 
+def bring_chrome_window_to_front():
+    """Forces the automation Chrome window to the absolute front of the Windows desktop."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        user32 = ctypes.windll.user32
+        user32.AllowSetForegroundWindow(-1)
+        
+        EnumWindows = user32.EnumWindows
+        EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+        GetWindowTextW = user32.GetWindowTextW
+        GetWindowTextLengthW = user32.GetWindowTextLengthW
+        IsWindowVisible = user32.IsWindowVisible
+
+        matched = []
+        def foreach_w(hwnd, lp):
+            if IsWindowVisible(hwnd):
+                length = GetWindowTextLengthW(hwnd)
+                if length > 0:
+                    buff = ctypes.create_unicode_buffer(length + 1)
+                    GetWindowTextW(hwnd, buff, length + 1)
+                    t = buff.value.lower()
+                    if any(term in t for term in ["linkedin", "jobs", "chrome", "stark"]):
+                        matched.append(hwnd)
+            return True
+
+        EnumWindows(EnumWindowsProc(foreach_w), 0)
+        for hwnd in matched:
+            user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040)
+            user32.SetWindowPos(hwnd, -2, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040)
+            user32.SetForegroundWindow(hwnd)
+            user32.BringWindowToTop(hwnd)
+    except Exception:
+        pass
+
+@app.route('/bring-to-front', methods=['GET', 'POST'])
+def bring_front():
+    bring_chrome_window_to_front()
+    return jsonify({"status": "success", "message": "Chrome automation window brought to front"})
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
     # Only open browser automatically when running locally

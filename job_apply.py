@@ -299,6 +299,7 @@ def bring_window_to_foreground(drv=None):
                 pass
         import ctypes
         user32 = ctypes.windll.user32
+        user32.AllowSetForegroundWindow(-1)
         
         EnumWindows = user32.EnumWindows
         EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
@@ -314,8 +315,8 @@ def bring_window_to_foreground(drv=None):
                 if length > 0:
                     buff = ctypes.create_unicode_buffer(length + 1)
                     GetWindowTextW(hwnd, buff, length + 1)
-                    title = buff.value
-                    if any(t in title for t in ["LinkedIn", "Jobs", "Chrome"]):
+                    title = buff.value.lower()
+                    if any(t in title for t in ["linkedin", "jobs", "chrome", "stark"]):
                         matched_hwnds.append(hwnd)
             return True
 
@@ -324,7 +325,8 @@ def bring_window_to_foreground(drv=None):
         for hwnd in matched_hwnds:
             try:
                 user32.ShowWindow(hwnd, 9)  # SW_RESTORE
-                user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE
+                user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040)
+                user32.SetWindowPos(hwnd, -2, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040)
                 user32.SetForegroundWindow(hwnd)
                 user32.BringWindowToTop(hwnd)
             except Exception:
@@ -675,6 +677,8 @@ def login_to_linkedin(user_id, password):
                 print(">> The bot will automatically detect completion and continue!")
                 print("!" * 60 + "\n")
                 security_prompted = True
+                update_automation_status({"current_evaluating": "🔒 Action Needed: LinkedIn 2FA / Verification detected. Please solve in Chrome window (Bot will resume automatically!)"})
+                bring_window_to_foreground(driver)
             continue
 
         error_elems = driver.find_elements(
@@ -2425,7 +2429,15 @@ def process_page_jobs(target_role=None, state: Any = None, seen_keys: Any = None
             except Exception:
                 pass
 
+            if card_title and "\n" in card_title:
+                card_title = card_title.split("\n")[0].strip()
+            if details_title and "\n" in details_title:
+                details_title = details_title.split("\n")[0].strip()
             title = card_title if card_title else (details_title or f"Job #{i+1}")
+            if title and "\n" in title:
+                title = title.split("\n")[0].strip()
+            if card_company and "\n" in card_company:
+                card_company = card_company.split("\n")[0].strip()
             company = card_company
 
             job_dedup_key = f"{title.lower()}::{company.lower()}"

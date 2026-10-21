@@ -603,10 +603,34 @@
                 <span class="pulse-dot"></span>
                 <span id="bot_status_text">INITIALIZING</span>
             </div>
+            <button type="button" class="back-link-btn" onclick="bringChromeToFront()" id="btn_focus_chrome" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.4); display:inline-flex; align-items:center; gap:6px; cursor:pointer;">👁️ View Chrome Bot</button>
             <a href="/start" class="back-link-btn" style="background:#ccff00;color:#000;font-weight:700;border-color:#ccff00;">▶ Run Bot Now</a>
             <a href="/" class="back-link-btn">⚙️ Configure</a>
         </div>
     </header>
+
+    <!-- Live Chrome Window Visibility Banner -->
+    <div class="chrome-live-banner" id="chrome_live_banner" style="background:#0f0f15; border:1px solid #272732; border-left:4px solid #ccff00; border-radius:14px; padding:14px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:36px; height:36px; border-radius:10px; background:rgba(204,255,0,0.1); border:1px solid rgba(204,255,0,0.3); display:flex; align-items:center; justify-content:center; font-size:18px;">
+                🖥️
+            </div>
+            <div>
+                <div style="font-weight:700; font-size:13px; color:#fff; display:flex; align-items:center; gap:8px;">
+                    <span>Live Chrome Automation Session</span>
+                    <span style="background:rgba(16,185,129,0.2); color:#10b981; font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; text-transform:uppercase;">Visible on Desktop</span>
+                </div>
+                <div style="font-size:12px; color:#9da0b3; margin-top:2px;">
+                    Google Chrome runs visibly on your screen, automatically signing in, searching LinkedIn, and submitting applications live.
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <button type="button" onclick="bringChromeToFront()" style="background:#ccff00; color:#000; border:none; padding:8px 16px; border-radius:10px; font-weight:700; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s ease;">
+                <span>👁️</span> <span>Bring Chrome to Front</span>
+            </button>
+        </div>
+    </div>
 
     <!-- Key Metrics Grid -->
     <section class="metrics-grid">
@@ -865,6 +889,20 @@
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    async function bringChromeToFront() {
+        const btn = document.getElementById('btn_focus_chrome');
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) btn.innerHTML = '⚡ Focusing Chrome...';
+        try {
+            await fetch(getBackendBaseUrl() + '/bring-to-front');
+        } catch (e) {
+            console.warn('Bring to front notice:', e);
+        }
+        setTimeout(() => {
+            if (btn) btn.innerHTML = origHtml;
+        }, 1200);
     }
 
     // Start polling immediately and every 1.5s
