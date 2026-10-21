@@ -1,21 +1,20 @@
 @echo off
-TITLE STARK - Auto Execution
+TITLE STARK LinkedIn Auto Applicant - Live Dashboard & Engine
 color 0a
 
+echo ==================================================
+echo      STARTING STARK LINKEDIN AUTOMATION SERVER...
+echo ==================================================
 echo.
-echo ==================================================
-echo      STARTING JOB APPLICATION PROTOCOL...
-echo ==================================================
+echo [*] Launching web dashboard on http://127.0.0.1:5001...
+echo [*] Chrome browser will launch automatically upon starting automation.
 echo.
 
-py run.py
-
-IF %ERRORLEVEL% NEQ 0 (
-    python run.py
+where py >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+    py app.py
+) else (
+    python app.py
 )
 
-echo.
-echo ==================================================
-echo      PROCESS COMPLETE
-echo ==================================================
 pause

@@ -763,6 +763,7 @@
     }
     setInterval(updateTimer, 1000);
 
+    let failCount = 0;
     // Live Status Poller
     
     function getBackendBaseUrl() {
@@ -779,6 +780,7 @@
             const res = await fetch(getBackendBaseUrl() + '/status', { mode: 'cors' });
             if (!res.ok) return;
             const data = await res.json();
+            failCount = 0;
 
             // Update stats
             const newlyApplied = data.total_applied || 0;
@@ -892,6 +894,13 @@
             }
 
         } catch (e) {
+            failCount++;
+            if (failCount > 2) {
+                const actLabel = document.getElementById('current_activity_label');
+                if (actLabel && !isFinished) {
+                    actLabel.innerHTML = '<span style="color:#f59e0b;">⚠️ Engine standing by on 127.0.0.1:5001. Please make sure <code>run.bat</code> is running on your computer.</span>';
+                }
+            }
             console.warn('Status poll note:', e);
         }
     }
