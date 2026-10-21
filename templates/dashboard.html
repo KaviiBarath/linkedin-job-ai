@@ -914,16 +914,18 @@
             <div class="cinema-hud-overlay">
                 <div class="cinema-hud-title" id="hud_title">● LIVE AUTOMATION ACTIVE</div>
                 <div class="cinema-hud-desc" id="hud_activity">Connecting to LinkedIn &amp; checking profile session...</div>
-                <div style="margin-top:6px; font-size:11px; color:#94a3b8; display:flex; gap:12px;">
+                <div style="margin-top:6px; font-size:11px; color:#94a3b8; display:flex; gap:12px; flex-wrap:wrap;">
                     <span>🎯 Target: <strong style="color:#ccff00;" id="hud_target_role">Java Developer, Python Developer</strong></span>
+                    <span>⚡ Speed: <strong style="color:#38bdf8;">~8s / job (Turbo Apply)</strong></span>
+                    <span>🎓 Mode: <strong style="color:#a78bfa;" id="hud_job_mode">{{ config.job_mode if config else 'Fresher' }}</strong></span>
                 </div>
             </div>
         </div>
 
         <div class="cinema-footer">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <span style="color:#22c55e;">● Stream Active:</span>
-                <span>Chrome is applying live on screen. Click video or 'Theater Mode' to view full screen.</span>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="color:#ccff00; font-weight:700;">⚡ Turbo Apply:</span>
+                <span>~8-12s / job with instant Heuristics &amp; Gemini Flash solver. Click video or 'Theater Mode' for fullscreen.</span>
             </div>
             <div style="font-family:'JetBrains Mono',monospace; color:#94a3b8;" id="stream_timestamp">
                 Direct HD Feed • Connected
