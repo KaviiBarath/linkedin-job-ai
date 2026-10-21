@@ -350,6 +350,36 @@ def bring_front():
     bring_chrome_window_to_front()
     return jsonify({"status": "success", "message": "Chrome automation window brought to front"})
 
+@app.route('/live-screen')
+def live_screen():
+    """Serves the latest real-time screenshot of the automated Chrome session."""
+    from flask import send_file, Response
+    candidates = [
+        os.path.join(STORAGE_DIR, "live_screen.png"),
+        os.path.join(BASE_DIR, "live_screen.png"),
+        os.path.join("/tmp", "live_screen.png")
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            try:
+                resp = send_file(c, mimetype='image/png')
+                resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                resp.headers['Pragma'] = 'no-cache'
+                resp.headers['Expires'] = '0'
+                return resp
+            except Exception:
+                pass
+
+    svg = """<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+        <rect width="960" height="540" fill="#0c0c12"/>
+        <rect x="2" y="2" width="956" height="536" fill="none" stroke="#222232" stroke-width="2" rx="12"/>
+        <circle cx="480" cy="220" r="48" fill="#181824"/>
+        <text x="480" y="232" fill="#ccff00" font-family="'Outfit', sans-serif" font-size="34" text-anchor="middle">⚡</text>
+        <text x="480" y="310" fill="#ffffff" font-family="'Outfit', sans-serif" font-size="20" font-weight="700" text-anchor="middle">Live Chrome Stream Ready</text>
+        <text x="480" y="340" fill="#888899" font-family="sans-serif" font-size="14" text-anchor="middle">Chrome will stream live screenshots here as it signs in &amp; applies to jobs</text>
+    </svg>"""
+    return Response(svg, mimetype='image/svg+xml', headers={'Cache-Control': 'no-cache, no-store, must-revalidate'})
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
     # Only open browser automatically when running locally

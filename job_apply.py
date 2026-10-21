@@ -248,6 +248,22 @@ JOB_MODE          = CONFIG.get("JOB_MODE", "Fresher")
 #----------------- Real-Time Live Status Tracking & Interface Reporting -----------------
 
 STATUS_FILE = os.path.join(STORAGE_DIR, "automation_status.json")
+SCREENSHOT_FILE = os.path.join(STORAGE_DIR, "live_screen.png")
+
+def capture_live_screen(drv=None):
+    """Captures live screenshot of Chrome for streaming directly to the dashboard."""
+    target_drv = drv or driver
+    if not target_drv:
+        return
+    try:
+        temp_screen = SCREENSHOT_FILE + ".tmp"
+        target_drv.save_screenshot(temp_screen)
+        if os.path.exists(SCREENSHOT_FILE):
+            os.replace(temp_screen, SCREENSHOT_FILE)
+        else:
+            os.rename(temp_screen, SCREENSHOT_FILE)
+    except Exception:
+        pass
 
 class AutomationState:
     """Strongly-typed runtime state tracker for automation execution."""
@@ -302,6 +318,9 @@ def update_automation_status(updates):
             os.replace(temp_file, STATUS_FILE)
         else:
             os.rename(temp_file, STATUS_FILE)
+
+        # Auto-capture screen for live dashboard stream
+        capture_live_screen()
     except Exception as e:
         pass
 
