@@ -265,6 +265,21 @@ def capture_live_screen(drv=None):
     except Exception:
         pass
 
+def start_screen_streaming_thread(drv=None):
+    """Launches a high-frequency background daemon to stream live_screen.png continuously to the dashboard."""
+    import threading
+    def _stream_worker():
+        while True:
+            try:
+                target = drv or driver
+                if target:
+                    capture_live_screen(target)
+            except Exception:
+                pass
+            time.sleep(1.2)
+    t = threading.Thread(target=_stream_worker, daemon=True)
+    t.start()
+
 class AutomationState:
     """Strongly-typed runtime state tracker for automation execution."""
     def __init__(self):
@@ -438,6 +453,11 @@ def init_driver():
                 });
             """
         })
+    except Exception:
+        pass
+
+    try:
+        drv.maximize_window()
     except Exception:
         pass
 
@@ -2104,6 +2124,84 @@ def enable_job_search_alert(role_name):
         print(f"   [!] Note while setting alert: {e}")
     return False
 
+LINKEDIN_CARD_SELECTORS = [
+    "//div[@data-view-name='job-card']",
+    "//div[contains(@class, 'job-card-job-posting-card')]",
+    "//div[contains(@class, 'job-card-container')]",
+    "//li[contains(@class, 'jobs-search-results__list-item')]",
+    "//li[contains(@class, 'scaffold-layout__list-item')]",
+    "//li[contains(@data-occludable-job-id, '')]",
+    "//div[contains(@data-job-id, '')]",
+    "//ul[contains(@class, 'jobs-search__results-list')]/li",
+    "//a[contains(@href, '/jobs/view/')]//ancestor::li"
+]
+
+def parse_and_clean_target_roles(raw_roles_str, job_mode="Fresher"):
+    """
+    Parses user-entered professions (e.g. 'Java developer profession, Python developer profession' or 'Java developer, Python developer')
+    into clean, normalized search queries with intelligent developer variations.
+    Returns a list of unique tuples: (search_query: str, canonical_role: str)
+    """
+    if not raw_roles_str or not raw_roles_str.strip():
+        raw_roles_str = "Java Developer"
+
+    # Split by comma, semicolon, slash, newline, or ' and '
+    raw_tokens = re.split(r'[,;/\n]|\band\b', raw_roles_str, flags=re.IGNORECASE)
+    cleaned_roles = []
+    seen_roles = set()
+    
+    # Noise words to strip so LinkedIn search keywords match real job postings
+    noise_words = [
+        "profession", "professions", "career", "careers", "role", "roles", 
+        "candidate", "candidates", "job", "jobs", "vacancy", "vacancies", 
+        "requirement", "requirements", "fresher", "freshers", "entry level", 
+        "entry-level", "expert", "level", "position", "positions"
+    ]
+    
+    for token in raw_tokens:
+        clean = token.strip()
+        if not clean:
+            continue
+        for nw in noise_words:
+            clean = re.sub(r'\b' + re.escape(nw) + r'\b', '', clean, flags=re.IGNORECASE)
+        clean = re.sub(r'\s+', ' ', clean).strip()
+        if clean and clean.lower() not in seen_roles:
+            seen_roles.add(clean.lower())
+            cleaned_roles.append(clean.title())
+            
+    if not cleaned_roles:
+        cleaned_roles = ["Java Developer"]
+        
+    expanded = []
+    seen_queries = set()
+    
+    for base_role in cleaned_roles:
+        lower_base = base_role.lower()
+        variations = [base_role]
+        
+        # If user gave something like "Java" or "Python" without developer/engineer
+        if not any(k in lower_base for k in ["developer", "engineer", "programmer", "analyst", "intern"]):
+            variations.append(f"{base_role} Developer")
+            
+        if job_mode == "Fresher":
+            if not lower_base.startswith("junior"):
+                variations.append(f"Junior {base_role}")
+            if "software" not in lower_base and "engineer" not in lower_base:
+                variations.append(f"{base_role.replace('Developer', 'Software Engineer')}")
+            variations.append(f"{base_role} Trainee")
+            variations.append(f"{base_role} Intern")
+        else:
+            if "software" not in lower_base and "engineer" not in lower_base:
+                variations.append(f"{base_role.replace('Developer', 'Software Engineer')}")
+                
+        for v in variations:
+            v_str = v.strip()
+            if v_str.lower() not in seen_queries:
+                seen_queries.add(v_str.lower())
+                expanded.append((v_str, base_role))
+                
+    return expanded
+
 def analyze_job_relevance(title, desc_snippet, target_role, job_mode="Fresher", years_exp="0"):
     """
     Strictly analyzes whether a job posting matches the user's assigned role and experience level.
@@ -2128,11 +2226,12 @@ def analyze_job_relevance(title, desc_snippet, target_role, job_mode="Fresher", 
         title_clean = re.sub(np, '', title_clean, flags=re.IGNORECASE).strip()
 
     # 1. Experience Level Analysis (Fresher vs Experienced)
+    # Note: Only true senior titles (senior, lead, architect, principal, manager) are filtered.
     senior_markers = [
         "senior", "sr.", "sr ", "lead", "principal", "manager", "architect", 
-        "director", "staff", "head", "specialist", "3+ years", "4+ years", 
+        "director", "staff", "head", "3+ years", "4+ years", 
         "5+ years", "6+ years", "7+ years", "8+ years", "10+ years", 
-        "experienced", "mid-senior", "expert"
+        "experienced", "mid-senior", "expert", "senior specialist", "lead specialist"
     ]
 
     if job_mode == "Fresher":
@@ -2163,38 +2262,29 @@ def analyze_job_relevance(title, desc_snippet, target_role, job_mode="Fresher", 
         "java": {
             "primary": ["java", "j2ee", "spring", "springboot", "spring boot", "hibernate", "core java"],
             "conflicts": [
-                "python", "django", "flask", "fastapi",
-                "react", "reactjs", "react.js", "angular", "vue", "vuejs",
                 "c#", "csharp", ".net", "dotnet", "asp.net",
-                "golang", "ruby", "php", "laravel",
-                "flutter", "swift", "ios", "android native",
                 "salesforce", "sap", "mainframe", "servicenow",
                 "devops", "kubernetes", "docker engineer",
-                "data analyst", "data scientist", "business analyst", "power bi", "tableau",
-                "qa manual", "software test engineer", "etl developer", "aws data", "cloud engineer"
+                "qa manual", "software test engineer", "etl developer"
             ]
         },
         "python": {
             "primary": ["python", "django", "flask", "fastapi"],
             "conflicts": [
-                "java", "spring", "springboot",
-                "react", "angular", "vue",
                 "c#", ".net", "dotnet", "php", "ruby", "golang",
                 "salesforce", "sap", "mainframe",
-                "devops engineer", "qa manual"
+                "qa manual"
             ]
         },
         "react": {
             "primary": ["react", "reactjs", "react.js", "frontend", "front-end"],
             "conflicts": [
-                "java", "python", "php", "c#", ".net", "ruby", "golang",
                 "salesforce", "sap", "mainframe"
             ]
         },
         "angular": {
             "primary": ["angular", "angularjs", "frontend", "front-end"],
             "conflicts": [
-                "java", "python", "php", "c#", ".net", "ruby", "react", "golang",
                 "salesforce", "sap", "mainframe"
             ]
         },
@@ -2204,7 +2294,7 @@ def analyze_job_relevance(title, desc_snippet, target_role, job_mode="Fresher", 
         },
         ".net": {
             "primary": [".net", "dotnet", "c#", "csharp", "asp.net"],
-            "conflicts": ["java", "python", "php", "ruby", "mainframe", "salesforce"]
+            "conflicts": ["mainframe", "salesforce"]
         },
         "qa": {
             "primary": ["qa", "quality assurance", "test", "testing", "selenium", "sdet"],
@@ -2212,11 +2302,33 @@ def analyze_job_relevance(title, desc_snippet, target_role, job_mode="Fresher", 
         }
     }
 
+    # Cross-tech tolerance: If candidate lists both Java and Python in ROLES or profile,
+    # neither conflicts with the other!
+    configured_roles_lower = (ROLES or "").lower()
+    profile_skills_lower = [s.lower() for s in PROFILE.get("skills", [])]
+    candidate_knows_python = "python" in configured_roles_lower or "python" in profile_skills_lower
+    candidate_knows_java = "java" in configured_roles_lower or "java" in profile_skills_lower
+
+    if candidate_knows_python and "java" in tech_stacks:
+        tech_stacks["java"]["conflicts"] = [c for c in tech_stacks["java"]["conflicts"] if c not in ["python", "django", "flask", "fastapi"]]
+    if candidate_knows_java and "python" in tech_stacks:
+        tech_stacks["python"]["conflicts"] = [c for c in tech_stacks["python"]["conflicts"] if c not in ["java", "spring", "springboot", "core java"]]
+
     assigned_domain = None
     for domain, data in tech_stacks.items():
         if domain in target_lower or any(p in target_lower for p in data["primary"]):
             assigned_domain = domain
             break
+
+    # Developer / Engineering synonyms that match entry-level developer roles
+    developer_synonyms = [
+        "software engineer", "developer", "software developer", "application developer", "applications developer",
+        "associate applications developer", "associate software developer", "associate software engineer",
+        "associate developer", "junior developer", "junior software engineer", "entry level developer",
+        "graduate engineer trainee", "trainee engineer", "system engineer", "programmer",
+        "software development engineer", "sde", "member technical staff", "web developer"
+    ]
+    is_developer_role = any(d in title_clean for d in developer_synonyms)
 
     if assigned_domain:
         domain_data = tech_stacks[assigned_domain]
@@ -2233,27 +2345,18 @@ def analyze_job_relevance(title, desc_snippet, target_role, job_mode="Fresher", 
         if has_primary_in_title:
             return True, f"Direct title match for {assigned_domain.upper()} role"
 
-        # Developer / Engineering synonyms that match entry-level developer roles
-        developer_synonyms = [
-            "software engineer", "developer", "software developer", "application developer", "applications developer",
-            "associate applications developer", "associate software developer", "associate software engineer",
-            "associate developer", "junior developer", "junior software engineer", "entry level developer",
-            "graduate engineer trainee", "trainee engineer", "system engineer", "programmer",
-            "software development engineer", "sde", "member technical staff"
-        ]
-        is_developer_role = any(d in title_clean for d in developer_synonyms)
-
         if is_developer_role:
-            if desc_lower:
-                has_conflict_in_desc = any(re.search(r'\b' + re.escape(c) + r'\b', desc_lower) for c in conflict_keywords[:8])
-                has_primary_in_desc = any(p in desc_lower for p in primary_keywords)
-                if has_conflict_in_desc and not has_primary_in_desc:
-                    return False, f"Role '{title_raw}' requires conflicting tech in description, not {assigned_domain.upper()}"
-                if has_primary_in_desc:
-                    return True, f"Entry-level role '{title_raw}' mentions {assigned_domain.upper()} in description"
-            return True, f"Valid entry-level Developer role ({title_raw}) matching search domain"
+            # Check for non-software hard conflicts (e.g. PLC, hardware, telecom)
+            hard_conflicts = ["plc programming", "plc", "vlsi", "telecom", "hardware engineer", "sap abap", "mainframe"]
+            has_hard = any(re.search(r'\b' + re.escape(hc) + r'\b', title_clean) for hc in hard_conflicts)
+            if has_hard:
+                return False, f"Role '{title_raw}' requires non-software hardware/ERP tech"
+            return True, f"Valid entry-level Developer role ({title_raw}) matching {assigned_domain.upper()} target"
 
         return False, f"Job title '{title_raw}' is not relevant to assigned role '{target_role}'"
+
+    if is_developer_role:
+        return True, f"Valid entry-level Developer role ({title_raw}) matching search target"
 
     target_words = [w for w in target_lower.split() if w not in ["developer", "engineer", "fresher", "job", "in", "for", "and", "the"]]
     if target_words:
@@ -2366,18 +2469,11 @@ def process_page_jobs(target_role=None, state: Any = None, seen_keys: Any = None
     # Step 1: Scroll search results panel to load all 25 cards
     scroll_search_results_panel()
 
-    card_selectors = [
-        "//div[contains(@class, 'job-card-container')]",
-        "//li[contains(@class, 'jobs-search-results__list-item')]",
-        "//li[contains(@class, 'scaffold-layout__list-item')]",
-        "//ul[contains(@class, 'jobs-search__results-list')]/li"
-    ]
     raw_cards = []
-    for sel in card_selectors:
+    for sel in LINKEDIN_CARD_SELECTORS:
         found = driver.find_elements(By.XPATH, sel)
-        if found:
+        if len(found) > len(raw_cards):
             raw_cards = found
-            break
 
     count_jobs = len(raw_cards)
     print(f">> Found {count_jobs} jobs on this page.")
@@ -2389,11 +2485,10 @@ def process_page_jobs(target_role=None, state: Any = None, seen_keys: Any = None
 
             # Refresh card list to prevent stale references
             current_cards = []
-            for sel in card_selectors:
+            for sel in LINKEDIN_CARD_SELECTORS:
                 found = driver.find_elements(By.XPATH, sel)
-                if found:
+                if len(found) > len(current_cards):
                     current_cards = found
-                    break
 
             if i >= len(current_cards):
                 break
@@ -2738,6 +2833,7 @@ def main():
 
     print("\n>> Initializing Chrome Browser with Anti-Detection and Session Persistence...")
     driver = init_driver()
+    start_screen_streaming_thread(driver)
 
     try:
         # Step 1: Direct LinkedIn Login Verification
@@ -2752,29 +2848,12 @@ def main():
             })
             return
 
-        # Step 2: Search & Apply for Roles with Smart Continuous Queries
-        roles_list = [r.strip() for r in ROLES.split(',') if r.strip()]
-        expanded_searches = []
-        for r in roles_list:
-            expanded_searches.append((r, r))
-            clean_r = r.lower().replace("fresher", "").replace("entry level", "").strip()
-            if clean_r and clean_r != r.lower():
-                expanded_searches.append((clean_r, r))
-            if JOB_MODE == "Fresher":
-                jr_r = f"junior {clean_r}".strip()
-                if jr_r != r.lower() and jr_r != clean_r:
-                    expanded_searches.append((jr_r, r))
-
-        # Deduplicate search terms while preserving order
-        unique_searches = []
-        seen_queries = set()
-        for q_term, assigned_r in expanded_searches:
-            if q_term.lower() not in seen_queries:
-                seen_queries.add(q_term.lower())
-                unique_searches.append((q_term, assigned_r))
+        # Step 2: Search & Apply for Roles with Smart Multi-Role Queries
+        unique_searches = parse_and_clean_target_roles(ROLES, JOB_MODE)
 
         print("\n" + "=" * 60)
         print(">> [2/3] STARTING AUTOMATED JOB SEARCH & APPLICATIONS...")
+        print(f"   Target Multi-Roles: '{ROLES}'")
         print(f"   Search variations generated: {[q[0] for q in unique_searches]}")
         print("=" * 60)
 
@@ -2822,25 +2901,38 @@ def main():
             for page in range(5):
                 print(f"\n--- [PAGE {page + 1}] ---")
                 update_automation_status({
-                    "current_evaluating": f"Scanning Page {page + 1} for '{search_query}'..."
+                    "role": assigned_role,
+                    "current_evaluating": f"Scanning Page {page + 1}/5 for '{search_query}'..."
                 })
                 count = process_page_jobs(target_role=assigned_role, state=state, seen_keys=seen_job_keys)
 
+                advanced = False
                 try:
                     ensure_active_window()
                     next_page_btn = driver.find_element(
                         By.XPATH,
-                        f"//button[@aria-label='Page {page+2}'] | //button[contains(@aria-label, 'page {page+2}')]"
+                        f"//button[@aria-label='Page {page+2}'] | //button[contains(@aria-label, 'page {page+2}')] | //li[@data-test-pagination-page-btn='{page+2}']//button"
                     )
                     if next_page_btn.is_displayed():
                         print(f">> Advancing to Page {page + 2}...")
                         click_element_safe(next_page_btn)
-                        time.sleep(4)
-                    else:
-                        break
+                        time.sleep(3.5)
+                        advanced = True
                 except Exception:
-                    print(">> Reached end of search results for this query.")
-                    break
+                    pass
+
+                # If button click was not possible and there are more pages, advance via direct LinkedIn pagination URL offset
+                if not advanced and page < 4:
+                    page_offset = (page + 1) * 25
+                    next_url = f"{search_url}&start={page_offset}"
+                    print(f">> Advancing to Page {page + 2} via direct offset: start={page_offset}...")
+                    driver.get(next_url)
+                    bring_window_to_foreground(driver)
+                    time.sleep(3)
+                    has_cards = any(len(driver.find_elements(By.XPATH, sel)) > 0 for sel in LINKEDIN_CARD_SELECTORS)
+                    if not has_cards:
+                        print(f">> Reached end of search results for '{search_query}'.")
+                        break
 
         total_applied = state.total_applied
         total_already = state.total_already_applied

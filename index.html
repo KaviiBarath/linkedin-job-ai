@@ -541,6 +541,17 @@
                 <label>Target Roles <span class="mandatory">*</span></label>
                 <input type="text" name="roles" id="roles_input" placeholder="e.g. Java Developer Fresher, Python Developer Fresher" value="java developer fresher" required oninput="evaluateRouteMatch()">
                 
+                <div class="pills-container" style="margin-top: 8px;">
+                    <button type="button" class="pill-btn" onclick="setQuickVal('roles_input', 'Java Developer, Python Developer')">⚡ Java + Python Developers</button>
+                    <button type="button" class="pill-btn" onclick="setQuickVal('roles_input', 'Java Developer Fresher')">Java Developer Fresher</button>
+                    <button type="button" class="pill-btn" onclick="setQuickVal('roles_input', 'Python Developer Fresher')">Python Developer Fresher</button>
+                    <button type="button" class="pill-btn" onclick="setQuickVal('roles_input', 'Associate Software Engineer')">Associate Software Engineer</button>
+                    <button type="button" class="pill-btn" onclick="setQuickVal('roles_input', 'Full Stack Developer')">Full Stack Developer</button>
+                </div>
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 6px;">
+                    💡 <em>Tip: You can specify multiple professions separated by comma (e.g. <code>Java Developer, Python Developer</code>). The bot will search, analyze, and apply to all roles one by one!</em>
+                </div>
+                
                 <!-- Active Route Indicator Badge -->
                 <div class="route-badge" id="route_badge">
                     <span id="route_badge_icon">🎓</span>

@@ -16,5 +16,9 @@ __pycache__/
 *.pyd
 *.log
 
+# Screenshots & temp files
+live_screen.png
+*.tmp
+
 # Duplicate unzipped folder
 LINKEDIN-AUTOMATION/

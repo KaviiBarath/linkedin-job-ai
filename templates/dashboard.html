@@ -572,6 +572,155 @@
             font-size: 11px;
         }
 
+        /* Command Center Live Cinema Monitor */
+        .cinema-monitor-card {
+            background: #08080d;
+            border: 1.5px solid #232334;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 26px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .cinema-header {
+            background: #11111a;
+            border-bottom: 1px solid #1e1e2c;
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .cinema-badge-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .ping-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 12px #ef4444;
+            animation: livePing 1.4s ease-in-out infinite;
+        }
+
+        @keyframes livePing {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        .cinema-screen-wrap {
+            position: relative;
+            background: #020204;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 480px;
+            padding: 14px;
+        }
+
+        #live_stream_img {
+            width: 100%;
+            height: auto;
+            max-height: 680px;
+            border-radius: 12px;
+            border: 1px solid #1d1d2b;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.85);
+            object-fit: contain;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        #live_stream_img:hover {
+            border-color: #4f4f72;
+        }
+
+        .cinema-hud-overlay {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            background: rgba(10, 10, 16, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            pointer-events: none;
+            max-width: 520px;
+        }
+
+        .cinema-hud-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 2px;
+        }
+
+        .cinema-hud-desc {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cinema-footer {
+            background: #0d0d14;
+            padding: 12px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-top: 1px solid #1a1a26;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Fullscreen / Theater Mode Overlay */
+        .cinema-theater-mode {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 999999 !important;
+            background: rgba(0, 0, 0, 0.97) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            border-radius: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .cinema-theater-mode .cinema-screen-wrap {
+            flex: 1 !important;
+            min-height: auto !important;
+            padding: 16px !important;
+        }
+
+        .cinema-theater-mode #live_stream_img {
+            max-height: calc(100vh - 120px) !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
         @media (max-width: 680px) {
             .top-nav {
                 flex-direction: column;
@@ -581,6 +730,13 @@
             .header-actions {
                 width: 100%;
                 justify-content: space-between;
+            }
+            .cinema-screen-wrap {
+                min-height: 280px;
+                padding: 8px;
+            }
+            #live_stream_img {
+                max-height: 380px;
             }
         }
     </style>
@@ -722,24 +878,55 @@
             <span id="current_activity_label">Connecting to LinkedIn & scanning candidate matches...</span>
         </div>
         <span style="color: var(--text-muted); font-size: 11px;">AUTO-REFRESH: 1.5s</span>
-    <!-- Live Chrome Browser Visual Screen Feed -->
-    <section class="section-panel" style="margin-bottom: 24px; border: 1.5px solid #27273a; border-radius: 18px; background: #0a0a10; overflow: hidden;">
-        <div class="section-header" style="background: #12121c; padding: 14px 20px; border-bottom: 1px solid #232332; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#ef4444; box-shadow:0 0 10px #ef4444; animation:pulse 1.5s infinite;"></span>
-                <span style="font-family:'Outfit',sans-serif; font-weight:700; font-size:15px; color:#fff;">LIVE CHROME AUTOMATION STREAM</span>
-                <span style="background:rgba(204,255,0,0.15); color:#ccff00; font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">Direct Feed</span>
+    </div>
+
+    <!-- Full-Width Command Center Live Chrome Automation Monitor -->
+    <section class="cinema-monitor-card" id="cinema_monitor_card">
+        <div class="cinema-header">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div class="cinema-badge-live">
+                    <span class="ping-dot"></span>
+                    <span>LIVE CHROME BROADCAST</span>
+                </div>
+                <span style="background:rgba(204,255,0,0.15); color:#ccff00; font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; text-transform:uppercase;">Direct HD Feed</span>
+                <span style="font-size:12px; color:#9ca3af;" id="cinema_header_role_hint">Multi-Role Engine Ready</span>
             </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <button type="button" onclick="refreshLiveScreen()" style="background:#1b1b26; border:1px solid #333346; color:#9da0b3; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer;">🔄 Refresh</button>
-                <button type="button" onclick="bringChromeToFront()" style="background:#ccff00; color:#000; border:none; padding:6px 14px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">👁️ Focus Desktop Chrome</button>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <button type="button" id="btn_theater" onclick="toggleTheaterMode()" style="background:#20202e; border:1px solid #3b3b55; color:#fff; padding:7px 14px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                    🖥️ Theater Mode
+                </button>
+                <button type="button" onclick="openLiveScreenTab()" style="background:#1b1b26; border:1px solid #333346; color:#cbd5e1; padding:7px 12px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer;">
+                    🔗 Open Tab
+                </button>
+                <button type="button" onclick="bringChromeToFront()" id="btn_focus_chrome" style="background:#ccff00; color:#000; border:none; padding:7px 14px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">
+                    👁️ Focus Desktop Chrome
+                </button>
+                <button type="button" onclick="refreshLiveScreen()" style="background:#1b1b26; border:1px solid #333346; color:#9da0b3; padding:7px 12px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer;">
+                    🔄 Refresh
+                </button>
             </div>
         </div>
-        <div style="padding: 16px; background: #060609; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 320px;">
-            <img id="live_stream_img" src="/live-screen" alt="Live Chrome Screen Feed" style="max-width: 100%; max-height: 520px; border-radius: 10px; border: 1px solid #1f1f2e; box-shadow: 0 10px 30px rgba(0,0,0,0.8); object-fit: contain;">
-            <div style="margin-top: 10px; display: flex; justify-content: space-between; width: 100%; max-width: 900px; font-size: 11px; color: #71717a;">
-                <span>🔴 Watch Chrome sign in &amp; apply live on screen (Desktop &amp; Android)</span>
-                <span id="stream_timestamp">Active Stream</span>
+
+        <div class="cinema-screen-wrap">
+            <img id="live_stream_img" src="/live-screen" alt="Live Chrome Screen Feed" onclick="toggleTheaterMode()" title="Click to expand / enter full Theater Mode">
+            
+            <!-- Real-Time HUD Overlay on Live Stream -->
+            <div class="cinema-hud-overlay">
+                <div class="cinema-hud-title" id="hud_title">● LIVE AUTOMATION ACTIVE</div>
+                <div class="cinema-hud-desc" id="hud_activity">Connecting to LinkedIn &amp; checking profile session...</div>
+                <div style="margin-top:6px; font-size:11px; color:#94a3b8; display:flex; gap:12px;">
+                    <span>🎯 Target: <strong style="color:#ccff00;" id="hud_target_role">Java Developer, Python Developer</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cinema-footer">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="color:#22c55e;">● Stream Active:</span>
+                <span>Chrome is applying live on screen. Click video or 'Theater Mode' to view full screen.</span>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace; color:#94a3b8;" id="stream_timestamp">
+                Direct HD Feed • Connected
             </div>
         </div>
     </section>
@@ -830,8 +1017,17 @@
             if (data.mode) document.getElementById('cfg_mode').innerText = data.mode;
 
             // Update current activity text
+            // Update current activity text & live stream HUD
             if (data.current_evaluating) {
                 document.getElementById('current_activity_label').innerText = `Active: ${data.current_evaluating}`;
+                const hudAct = document.getElementById('hud_activity');
+                if (hudAct) hudAct.innerText = data.current_evaluating;
+            }
+            if (data.role) {
+                const hudRole = document.getElementById('hud_target_role');
+                if (hudRole) hudRole.innerText = data.role;
+                const headerRole = document.getElementById('cinema_header_role_hint');
+                if (headerRole) headerRole.innerText = `Role: ${data.role}`;
             }
 
             // Update Status Badge
@@ -845,6 +1041,8 @@
                 badgeText.innerText = 'COMPLETED ✓';
                 spinner.style.display = 'none';
                 document.getElementById('current_activity_label').innerText = 'All matching roles processed successfully.';
+                const hudTitle = document.getElementById('hud_title');
+                if (hudTitle) hudTitle.innerHTML = '● AUTOMATION PROTOCOL COMPLETE ✓';
 
                 // Show Final Completion Banner with detailed instructions
                 const banner = document.getElementById('completion_banner');
@@ -939,6 +1137,31 @@
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    function toggleTheaterMode() {
+        const card = document.getElementById('cinema_monitor_card');
+        const btn = document.getElementById('btn_theater');
+        if (!card) return;
+        card.classList.toggle('cinema-theater-mode');
+        const isTheater = card.classList.contains('cinema-theater-mode');
+        if (btn) {
+            btn.innerHTML = isTheater ? '✖ Exit Theater Mode (ESC)' : '🖥️ Theater Mode';
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const card = document.getElementById('cinema_monitor_card');
+            if (card && card.classList.contains('cinema-theater-mode')) {
+                toggleTheaterMode();
+            }
+        }
+    });
+
+    function openLiveScreenTab() {
+        const base = typeof getBackendBaseUrl === 'function' ? getBackendBaseUrl() : '';
+        window.open(base + '/live-screen?t=' + Date.now(), '_blank');
+    }
+
     async function bringChromeToFront() {
         const btn = document.getElementById('btn_focus_chrome');
         const origHtml = btn ? btn.innerHTML : '';
@@ -956,12 +1179,13 @@
     function refreshLiveScreen() {
         const img = document.getElementById('live_stream_img');
         if (img) {
-            img.src = '/live-screen?t=' + Date.now();
+            const base = typeof getBackendBaseUrl === 'function' ? getBackendBaseUrl() : '';
+            img.src = base + '/live-screen?t=' + Date.now();
             const ts = document.getElementById('stream_timestamp');
             if (ts) ts.innerText = 'Stream active • ' + new Date().toLocaleTimeString();
         }
     }
-    setInterval(refreshLiveScreen, 2000);
+    setInterval(refreshLiveScreen, 1500);
 
     // If viewing via Vercel or external host, display cloud portal switcher notice
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
