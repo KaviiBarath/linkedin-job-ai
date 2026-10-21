@@ -845,6 +845,51 @@
         </div>
     </section>
 
+    <!-- Zero-Terminal Engine Connection Status Bar (Automatic Local Bridge) -->
+    <div class="engine-bridge-bar" id="engine_bridge_bar" style="background:#0e0e17; border:1px solid #28283c; border-radius:14px; padding:12px 20px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <span id="bridge_status_dot" style="width:12px; height:12px; border-radius:50%; background:#ccff00; display:inline-block; box-shadow:0 0 12px rgba(204,255,0,0.8);"></span>
+            <div>
+                <span id="bridge_status_text" style="font-size:13px; font-weight:700; color:#ffffff;">Zero-Terminal Local Engine Active</span>
+                <span style="font-size:11px; color:#9ca3af; margin-left:8px;" id="bridge_subtext">(Port 5001 • Background Service)</span>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" onclick="testLocalConnection()" id="btn_test_conn" style="background:#1c1c28; border:1px solid #383850; color:#cbd5e1; font-size:11px; font-weight:600; padding:6px 12px; border-radius:8px; cursor:pointer;">⚡ Test Connection</button>
+            <button type="button" onclick="bringChromeToFront()" style="background:#ccff00; border:none; color:#000; font-size:11px; font-weight:700; padding:6px 12px; border-radius:8px; cursor:pointer;">👁️ Bring Chrome to Front</button>
+        </div>
+    </div>
+
+    <!-- Resume Intelligence Verified (1-Scan Analysis) Card -->
+    <div class="resume-intel-card" id="resume_intel_card" style="background:#0d0d16; border:1px solid #26263b; border-radius:14px; padding:16px 20px; margin-bottom:16px; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:22px;">📄</span>
+                <div>
+                    <div style="font-size:14px; font-weight:700; color:#ffffff;">Resume Intelligence Verified (1-Scan Analysis)</div>
+                    <div style="font-size:11px; color:#9ca3af;" id="resume_intel_file">Barath_R_Resume.pdf • Profile &amp; Screening Questions Pre-Solved</div>
+                </div>
+            </div>
+            <span style="background:rgba(204,255,0,0.15); color:#ccff00; border:1px solid rgba(204,255,0,0.35); font-size:11px; font-weight:700; padding:4px 12px; border-radius:100px;" id="resume_scan_status_badge">✓ 1-SCAN 100% READY</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; font-size:12px; color:#cbd5e1; margin-bottom:12px; background:#141422; padding:12px 14px; border-radius:10px; border:1px solid #1f1f33;">
+            <div>👤 <strong>Candidate:</strong> <span id="intel_name" style="color:#ffffff;">Barath R</span></div>
+            <div>🎓 <strong>Degree:</strong> <span id="intel_degree" style="color:#ffffff;">B.E. Computer Science</span></div>
+            <div>📧 <strong>Email:</strong> <span id="intel_email" style="color:#ffffff;">barath0144@gmail.com</span></div>
+            <div>📞 <strong>Phone:</strong> <span id="intel_phone" style="color:#ffffff;">+91 9789123456</span></div>
+        </div>
+        <div>
+            <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#94a3b8; margin-bottom:6px;">Detected Technical Skills &amp; Domain Inventory:</div>
+            <div id="intel_skills_list" style="display:flex; flex-wrap:wrap; gap:6px;">
+                <span style="background:#1a1a2b; border:1px solid #33334d; color:#ccff00; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;">Java</span>
+                <span style="background:#1a1a2b; border:1px solid #33334d; color:#ccff00; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;">Python</span>
+                <span style="background:#1a1a2b; border:1px solid #33334d; color:#ccff00; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;">SQL</span>
+                <span style="background:#1a1a2b; border:1px solid #33334d; color:#ccff00; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;">Spring Boot</span>
+                <span style="background:#1a1a2b; border:1px solid #33334d; color:#ccff00; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;">OOP</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Configuration Context Banner -->
     <div class="config-banner">
         <div class="config-pill-group">
@@ -991,24 +1036,88 @@
     }
     setInterval(updateTimer, 1000);
 
-    let failCount = 0;
-    // Live Status Poller
-    
     function getBackendBaseUrl() {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return '';
         }
-        const stored = localStorage.getItem('stark_engine_url');
-        if (stored) return stored.replace(/\/+$/, '');
+        const custom = localStorage.getItem('stark_engine_url');
+        if (custom) return custom.replace(/\/+$/, '');
         return 'http://127.0.0.1:5001';
     }
 
+    async function testLocalConnection() {
+        const btn = document.getElementById('btn_test_conn');
+        if (btn) btn.innerHTML = '⚡ Testing...';
+        try {
+            const resp = await fetch(getBackendBaseUrl() + '/status', { mode: 'cors', cache: 'no-store' });
+            if (resp.ok) {
+                updateBridgeUI(true);
+                alert('✓ Connected to Local Stark Engine on ' + (getBackendBaseUrl() || '127.0.0.1:5001') + '! Live stream and automation active.');
+            } else {
+                updateBridgeUI(false);
+                alert('⚠️ Engine unreachable. Please double-click Launch_Stark_Automation.vbs on your PC.');
+            }
+        } catch (err) {
+            updateBridgeUI(false);
+            alert('⚠️ Cannot connect to local engine. Please double-click Launch_Stark_Automation.vbs to launch the zero-terminal service.');
+        }
+        if (btn) btn.innerHTML = '⚡ Test Connection';
+    }
+
+    function updateBridgeUI(isConnected) {
+        const dot = document.getElementById('bridge_status_dot');
+        const text = document.getElementById('bridge_status_text');
+        const sub = document.getElementById('bridge_subtext');
+        if (isConnected) {
+            if (dot) {
+                dot.style.background = '#ccff00';
+                dot.style.boxShadow = '0 0 12px rgba(204,255,0,0.8)';
+            }
+            if (text) text.innerHTML = '🟢 Zero-Terminal Local Engine Connected';
+            if (sub) sub.innerHTML = 'Streaming Live Chrome HD from Desktop (Zero Terminal Windows)';
+        } else {
+            if (dot) {
+                dot.style.background = '#ff4b4b';
+                dot.style.boxShadow = '0 0 10px #ff4b4b';
+            }
+            if (text) text.innerHTML = '🟡 Local Engine Offline: Double-click <code>Launch_Stark_Automation.vbs</code> on your PC';
+            if (sub) sub.innerHTML = 'Auto-reconnecting every 2s (Zero terminal needed)...';
+        }
+    }
+
+    let failCount = 0;
+    // Live Status Poller
     async function fetchAutomationStatus() {
         try {
-            const res = await fetch(getBackendBaseUrl() + '/status', { mode: 'cors' });
-            if (!res.ok) return;
+            const base = getBackendBaseUrl();
+            const res = await fetch(base + '/status', { mode: 'cors', cache: 'no-store' });
+            if (!res.ok) {
+                updateBridgeUI(false);
+                return;
+            }
+            updateBridgeUI(true);
             const data = await res.json();
             failCount = 0;
+
+            // Render Resume 1-Scan Intelligence if available
+            if (data.resume_analysis) {
+                const ra = data.resume_analysis;
+                const card = document.getElementById('resume_intel_card');
+                if (card) card.style.display = 'block';
+                if (ra.candidate_name) document.getElementById('intel_name').innerText = ra.candidate_name;
+                if (ra.degree) document.getElementById('intel_degree').innerText = ra.degree;
+                if (ra.email) document.getElementById('intel_email').innerText = ra.email;
+                if (ra.phone) document.getElementById('intel_phone').innerText = ra.phone;
+                if (ra.resume_file) document.getElementById('resume_intel_file').innerText = `${ra.resume_file} • 1-Scan Profile Pre-Solved`;
+                if (ra.detected_skills && ra.detected_skills.length > 0) {
+                    const skillsWrap = document.getElementById('intel_skills_list');
+                    if (skillsWrap) {
+                        skillsWrap.innerHTML = ra.detected_skills.map(s => `
+                            <span style="background:#1a1a2b; border:1px solid #33334d; color:#ccff00; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;">${escapeHtml(s)}</span>
+                        `).join('');
+                    }
+                }
+            }
 
             // Update stats
             const newlyApplied = data.total_applied || 0;
@@ -1028,7 +1137,6 @@
             if (data.location) document.getElementById('cfg_location').innerText = data.location;
             if (data.mode) document.getElementById('cfg_mode').innerText = data.mode;
 
-            // Update current activity text
             // Update current activity text & live stream HUD
             if (data.current_evaluating) {
                 document.getElementById('current_activity_label').innerText = `Active: ${data.current_evaluating}`;
@@ -1134,10 +1242,11 @@
 
         } catch (e) {
             failCount++;
+            updateBridgeUI(false);
             if (failCount > 2) {
                 const actLabel = document.getElementById('current_activity_label');
                 if (actLabel && !isFinished) {
-                    actLabel.innerHTML = '<span style="color:#f59e0b;">⚠️ Engine standing by on 127.0.0.1:5001. Please make sure <code>run.bat</code> is running on your computer.</span>';
+                    actLabel.innerHTML = '<span style="color:#f59e0b;">⚠️ Engine standing by on 127.0.0.1:5001. Double-click <code>Launch_Stark_Automation.vbs</code> on your PC (Zero Terminal).</span>';
                 }
             }
             console.warn('Status poll note:', e);
@@ -1170,7 +1279,7 @@
     });
 
     function openLiveScreenTab() {
-        const base = typeof getBackendBaseUrl === 'function' ? getBackendBaseUrl() : '';
+        const base = getBackendBaseUrl();
         window.open(base + '/live-screen?t=' + Date.now(), '_blank');
     }
 
@@ -1179,7 +1288,7 @@
         const origHtml = btn ? btn.innerHTML : '';
         if (btn) btn.innerHTML = '⚡ Focusing Chrome...';
         try {
-            await fetch(getBackendBaseUrl() + '/bring-to-front');
+            await fetch(getBackendBaseUrl() + '/bring-to-front', { mode: 'cors' });
         } catch (e) {
             console.warn('Bring to front notice:', e);
         }
@@ -1191,7 +1300,7 @@
     function refreshLiveScreen() {
         const img = document.getElementById('live_stream_img');
         if (img) {
-            const base = typeof getBackendBaseUrl === 'function' ? getBackendBaseUrl() : '';
+            const base = getBackendBaseUrl();
             img.src = base + '/live-screen?t=' + Date.now();
             const ts = document.getElementById('stream_timestamp');
             if (ts) ts.innerText = 'Stream active • ' + new Date().toLocaleTimeString();

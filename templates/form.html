@@ -467,6 +467,14 @@
             <h1 class="logo-title">STARK <span>🚀</span></h1>
             <p class="subtitle">Autonomous AI LinkedIn & Company Job Applicant</p>
         </div>
+        <!-- Zero-Terminal Engine Connection Status Bar -->
+        <div id="form_bridge_bar" style="background:#0e0e17; border:1px solid #28283c; border-radius:14px; padding:12px 18px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="form_bridge_dot" style="width:10px; height:10px; border-radius:50%; background:#ccff00; display:inline-block; box-shadow:0 0 10px rgba(204,255,0,0.8);"></span>
+                <span id="form_bridge_text" style="font-size:12px; font-weight:700; color:#ffffff;">Zero-Terminal Engine Ready</span>
+            </div>
+            <button type="button" onclick="testLocalEngineForm()" id="btn_form_test" style="background:#1e1e2c; border:1px solid #36364d; color:#ccff00; font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; cursor:pointer;">⚡ Test Engine</button>
+        </div>
 
         <form action="/submit" method="POST" enctype="multipart/form-data" id="starkForm">
 
@@ -838,6 +846,73 @@
             btn.innerHTML = '<span>LAUNCHING AUTOMATION ENGINE...</span> <span>⏳</span>';
             btn.style.opacity = '0.85';
             btn.style.pointerEvents = 'none';
+        });
+
+        // Zero-Terminal Cloud-to-Local Bridge
+        function getBackendBaseUrl() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return '';
+            }
+            const custom = localStorage.getItem('stark_engine_url');
+            if (custom) return custom.replace(/\/+$/, '');
+            return 'http://127.0.0.1:5001';
+        }
+
+        async function checkLocalEngine() {
+            const base = getBackendBaseUrl();
+            const dot = document.getElementById('form_bridge_dot');
+            const text = document.getElementById('form_bridge_text');
+            const form = document.getElementById('starkForm');
+
+            if (!base) {
+                // Running on local server directly
+                if (dot) {
+                    dot.style.background = '#ccff00';
+                    dot.style.boxShadow = '0 0 12px rgba(204,255,0,0.8)';
+                }
+                if (text) text.innerHTML = '🟢 Zero-Terminal Local Engine Ready';
+                return;
+            }
+
+            try {
+                const resp = await fetch(base + '/status', { mode: 'cors', cache: 'no-store' });
+                if (resp.ok) {
+                    if (dot) {
+                        dot.style.background = '#ccff00';
+                        dot.style.boxShadow = '0 0 12px rgba(204,255,0,0.8)';
+                    }
+                    if (text) text.innerHTML = '🟢 Connected to Local Engine (Zero-Terminal Active)';
+                    if (form) form.action = base + '/submit';
+                } else {
+                    throw new Error('Non-200 response');
+                }
+            } catch (e) {
+                if (dot) {
+                    dot.style.background = '#ff4b4b';
+                    dot.style.boxShadow = '0 0 10px #ff4b4b';
+                }
+                if (text) text.innerHTML = '🟡 Cloud Mode: Double-click <code>Launch_Stark_Automation.vbs</code> on your PC';
+            }
+        }
+
+        async function testLocalEngineForm() {
+            const base = getBackendBaseUrl() || 'http://127.0.0.1:5001';
+            try {
+                const resp = await fetch(base + '/status', { mode: 'cors', cache: 'no-store' });
+                if (resp.ok) {
+                    alert('✓ Connected to Local Engine on ' + base + '! Ready to launch Chrome with 0 terminal windows.');
+                    checkLocalEngine();
+                } else {
+                    alert('⚠️ Local Engine offline. Double-click Launch_Stark_Automation.vbs on your PC.');
+                }
+            } catch (e) {
+                alert('⚠️ Cannot reach ' + base + '. Please make sure Launch_Stark_Automation.vbs is running on your Windows PC.');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            checkLocalEngine();
+            setInterval(checkLocalEngine, 3000);
         });
     </script>
 </body>

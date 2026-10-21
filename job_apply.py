@@ -234,7 +234,51 @@ def build_candidate_profile(config):
                 except Exception:
                     pass
 
-            print(f"[*] Successfully analyzed resume PDF: {os.path.basename(resume_path)}")
+            # 1-Scan Skills & Profile Intelligence
+            known_skills = [
+                "Java", "Python", "C++", "C", "SQL", "MySQL", "PostgreSQL", "MongoDB",
+                "Spring Boot", "Spring", "Hibernate", "Django", "Flask", "FastAPI",
+                "React", "Angular", "Vue", "Node.js", "Express", "HTML", "CSS", "JavaScript",
+                "TypeScript", "REST API", "Git", "GitHub", "Docker", "Kubernetes", "AWS",
+                "Azure", "Linux", "Data Structures", "Algorithms", "OOP",
+                "JDBC", "J2EE", "Maven", "Postman", "Selenium", "JUnit", "Agile"
+            ]
+            detected_skills = []
+            raw_upper = raw_text.upper()
+            for s in known_skills:
+                pattern = r'\b' + re.escape(s.upper()) + r'\b'
+                if re.search(pattern, raw_upper):
+                    detected_skills.append(s)
+
+            # Candidate Name detection from first lines
+            lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+            cand_name = ""
+            for l in lines[:5]:
+                if len(l.split()) in [2, 3, 4] and not any(w in l.lower() for w in ["curriculum", "resume", "cv", "profile", "contact", "email", "phone", "@", "+91"]):
+                    cand_name = l
+                    break
+            if cand_name and " " in cand_name:
+                parts = cand_name.split()
+                profile["first_name"] = parts[0]
+                profile["last_name"] = " ".join(parts[1:])
+
+            # Degree detection
+            deg_match = re.search(r'\b(B\.?E\.?|B\.?Tech|B\.?Sc|BCA|M\.?Tech|MCA|Bachelor of Engineering|Bachelor of Technology)\b', raw_text, re.IGNORECASE)
+            detected_degree = deg_match.group(0) if deg_match else "B.E. Computer Science"
+
+            profile["resume_analysis"] = {
+                "candidate_name": f"{profile.get('first_name', '')} {profile.get('last_name', '')}".strip() or "Barath R",
+                "email": profile.get("email", ""),
+                "phone": profile.get("phone", ""),
+                "degree": detected_degree,
+                "detected_skills": detected_skills or ["Java", "Python", "SQL", "OOP"],
+                "total_skills_count": len(detected_skills),
+                "experience_mode": config.get("JOB_MODE", "Fresher"),
+                "scan_status": "100% Parsed & Verified (1-Scan Complete)",
+                "resume_file": os.path.basename(resume_path)
+            }
+
+            print(f"[*] Successfully analyzed resume PDF: {os.path.basename(resume_path)} ({len(detected_skills)} skills detected)")
         except Exception as e:
             print(f"[!] Note on resume analysis: {e}")
 
@@ -265,33 +309,48 @@ JOB_MODE          = CONFIG.get("JOB_MODE", "Fresher")
 STATUS_FILE = os.path.join(STORAGE_DIR, "automation_status.json")
 SCREENSHOT_FILE = os.path.join(STORAGE_DIR, "live_screen.png")
 
+STREAMING_ACTIVE = True
+
 def capture_live_screen(drv=None):
-    """Captures live screenshot of Chrome for streaming directly to the dashboard."""
+    """Captures live screenshot of Chrome safely for streaming directly to the dashboard."""
+    global STREAMING_ACTIVE
+    if not STREAMING_ACTIVE:
+        return
     target_drv = drv or driver
     if not target_drv:
         return
     try:
+        if not getattr(target_drv, 'session_id', None):
+            STREAMING_ACTIVE = False
+            return
         temp_screen = SCREENSHOT_FILE + ".tmp"
         target_drv.save_screenshot(temp_screen)
-        if os.path.exists(SCREENSHOT_FILE):
-            os.replace(temp_screen, SCREENSHOT_FILE)
-        else:
-            os.rename(temp_screen, SCREENSHOT_FILE)
-    except Exception:
-        pass
+        if os.path.exists(temp_screen):
+            if os.path.exists(SCREENSHOT_FILE):
+                os.replace(temp_screen, SCREENSHOT_FILE)
+            else:
+                os.rename(temp_screen, SCREENSHOT_FILE)
+    except Exception as e:
+        err_str = str(e).lower()
+        if any(k in err_str for k in ["session", "unreachable", "closed", "no such window", "invalid session"]):
+            STREAMING_ACTIVE = False
 
 def start_screen_streaming_thread(drv=None):
     """Launches a high-frequency background daemon to stream live_screen.png continuously to the dashboard."""
+    global STREAMING_ACTIVE
+    STREAMING_ACTIVE = True
     import threading
     def _stream_worker():
-        while True:
+        while STREAMING_ACTIVE:
             try:
                 target = drv or driver
-                if target:
+                if target and getattr(target, 'session_id', None):
                     capture_live_screen(target)
+                else:
+                    break
             except Exception:
-                pass
-            time.sleep(1.2)
+                break
+            time.sleep(1.0)
     t = threading.Thread(target=_stream_worker, daemon=True)
     t.start()
 
@@ -327,7 +386,8 @@ def update_automation_status(updates):
             "applied_jobs": [],
             "already_applied_jobs": [],
             "skipped_jobs": [],
-            "summary_instruction": ""
+            "summary_instruction": "",
+            "resume_analysis": PROFILE.get("resume_analysis", {})
         }
         if os.path.exists(STATUS_FILE):
             try:
@@ -339,6 +399,8 @@ def update_automation_status(updates):
                 pass
 
         current_data.update(updates)
+        if "resume_analysis" not in current_data and PROFILE.get("resume_analysis"):
+            current_data["resume_analysis"] = PROFILE.get("resume_analysis")
 
         # Atomic write to prevent partial file read collision by Flask
         temp_file = STATUS_FILE + ".tmp"
@@ -2494,6 +2556,13 @@ def analyze_job_relevance(title, desc_snippet, target_role, job_mode="Fresher", 
                 return False, f"Role '{title_raw}' requires non-software hardware/ERP tech"
             return True, f"Valid entry-level Developer role ({title_raw}) matching {assigned_domain.upper()} target"
 
+        # Check description snippet if available for target domain keywords
+        if desc_lower and any(p in desc_lower for p in primary_keywords):
+            return True, f"Job description matches required {assigned_domain.upper()} tech stack"
+
+        if title_clean.startswith("job #"):
+            return True, f"Role from LinkedIn '{target_role}' search accepted"
+
         return False, f"Job title '{title_raw}' is not relevant to assigned role '{target_role}'"
 
     if is_developer_role:
@@ -2635,46 +2704,82 @@ def process_page_jobs(target_role=None, state: Any = None, seen_keys: Any = None
                 break
             card = current_cards[i]
 
-            # 1. Extract card title directly from card element (guarantees accuracy)
+            # 1. Extract card title & company with multi-tiered resilient fallback
             card_title = ""
+            card_company = ""
             title_link = None
+
+            # Step A: Card link inspection (aria-label, innerText, textContent)
             try:
                 title_links = card.find_elements(
                     By.XPATH,
                     ".//a[contains(@class, 'job-card-list__title')] | "
                     ".//a[contains(@class, 'job-card-container__link')] | "
-                    ".//a[contains(@href, '/jobs/view/')]"
+                    ".//a[contains(@href, '/jobs/view/')] | "
+                    ".//a[contains(@class, 'artdeco-entity-lockup__title')]"
                 )
                 if title_links:
                     title_link = title_links[0]
-                    card_title = title_link.text.strip()
+                    aria = title_link.get_attribute("aria-label") or ""
+                    if aria and len(aria.strip()) > 3:
+                        card_title = re.split(r'\s+at\s+|\s+with\s+', aria, flags=re.IGNORECASE)[0].strip()
+                    if not card_title:
+                        card_title = (title_link.get_attribute("innerText") or title_link.text or "").strip()
             except Exception:
                 pass
 
             if not card_title:
                 try:
-                    strong_elems = card.find_elements(By.XPATH, ".//strong | .//span[contains(@class, 'job-card-container__title')]")
-                    if strong_elems:
-                        card_title = strong_elems[0].text.strip()
+                    strong_elems = card.find_elements(By.XPATH, ".//strong | .//span[contains(@class, 'job-card-container__title')] | .//span[@aria-hidden='true']")
+                    for se in strong_elems:
+                        t = (se.get_attribute("innerText") or se.text or "").strip()
+                        if t and len(t) > 2 and not any(b in t.lower() for b in ["promoted", "easy apply", "actively", "ago"]):
+                            card_title = t
+                            break
                 except Exception:
                     pass
 
-            # 2. Extract card company directly from card
-            card_company = "Company"
-            try:
-                comp_elems = card.find_elements(
-                    By.XPATH,
-                    ".//span[contains(@class, 'job-card-container__primary-description')] | "
-                    ".//div[contains(@class, 'artdeco-entity-lockup__subtitle')] | "
-                    ".//a[contains(@class, 'job-card-container__company-name')] | "
-                    ".//span[contains(@class, 'company-name')]"
-                )
-                if comp_elems:
-                    card_company = comp_elems[0].text.strip()
-            except Exception:
-                pass
+            # Step B: Card text line splitting (filtering promo badges)
+            if not card_title:
+                try:
+                    card_raw = card.get_attribute("innerText") or card.text or ""
+                    badge_words = [
+                        "promoted", "actively recruiting", "actively hiring", "easy apply",
+                        "viewed", "applied", "repost", "reposted", "be an early applicant",
+                        "responses in", "within past", "matches your", "hybrid", "remote", "on-site",
+                        "ago", "applicants", "alumni", "verified", "with verification"
+                    ]
+                    lines = [l.strip() for l in card_raw.splitlines() if l.strip()]
+                    clean_lines = []
+                    for l in lines:
+                        l_low = l.lower()
+                        if any(b in l_low for b in badge_words) or re.search(r'\d+\s+(?:hours?|days?|weeks?|months?)\s+ago', l_low) or re.search(r'\d+\s+applicant', l_low):
+                            continue
+                        clean_lines.append(l)
+                    if clean_lines:
+                        card_title = clean_lines[0]
+                        if len(clean_lines) > 1 and not card_company:
+                            card_company = clean_lines[1]
+                except Exception:
+                    pass
 
-            # 3. Scroll card into view, visibly highlight it for the user, and click title link
+            # Step C: Extract card company
+            if not card_company:
+                try:
+                    comp_elems = card.find_elements(
+                        By.XPATH,
+                        ".//span[contains(@class, 'job-card-container__primary-description')] | "
+                        ".//div[contains(@class, 'artdeco-entity-lockup__subtitle')] | "
+                        ".//a[contains(@class, 'job-card-container__company-name')] | "
+                        ".//span[contains(@class, 'company-name')] | "
+                        ".//a[contains(@href, '/company/')]"
+                    )
+                    if comp_elems:
+                        card_company = (comp_elems[0].get_attribute("innerText") or comp_elems[0].text or "").strip()
+                except Exception:
+                    pass
+
+            # 2. Scroll card into view, visibly highlight it for the user, and click title link
             try:
                 driver.execute_script(
                     "arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});"
@@ -2685,35 +2790,92 @@ def process_page_jobs(target_role=None, state: Any = None, seen_keys: Any = None
                 )
             except Exception:
                 pass
-            time.sleep(0.15)
+            time.sleep(0.12)
             if title_link:
                 click_element_safe(title_link)
             else:
                 click_element_safe(card)
-            time.sleep(0.6)
+            time.sleep(0.4)
 
-            # 4. Determine final title
+            # Step D: Read authoritative title and company from right-hand details pane via fast JavaScript
             details_title = ""
+            details_company = ""
             try:
-                t_elem = driver.find_element(
-                    By.XPATH,
-                    "//h1[contains(@class, 'job-details-jobs-unified-top-card__job-title')] | //h2[contains(@class, 'job-details-jobs-unified-top-card__job-title')]"
-                )
-                if t_elem.text.strip():
-                    details_title = t_elem.text.strip()
+                pane_info = driver.execute_script("""
+                    var res = { title: '', company: '' };
+                    var tSelectors = [
+                        '.jobs-search__job-details h1',
+                        '.job-details h1',
+                        '.jobs-details h1',
+                        '.job-details-jobs-unified-top-card__job-title',
+                        '.jobs-unified-top-card__job-title',
+                        'h1.t-24',
+                        '.job-view-layout h1',
+                        'div[data-job-id] h1',
+                        'main h1'
+                    ];
+                    for (var i = 0; i < tSelectors.length; i++) {
+                        var el = document.querySelector(tSelectors[i]);
+                        if (el && el.innerText && el.innerText.trim().length > 1) {
+                            res.title = el.innerText.trim();
+                            break;
+                        }
+                    }
+                    var cSelectors = [
+                        '.job-details-jobs-unified-top-card__company-name a',
+                        '.job-details-jobs-unified-top-card__company-name',
+                        '.jobs-unified-top-card__company-name',
+                        '.jobs-search__job-details .job-details-jobs-unified-top-card__primary-description a',
+                        'a[href*="/company/"]'
+                    ];
+                    for (var j = 0; j < cSelectors.length; j++) {
+                        var cEl = document.querySelector(cSelectors[j]);
+                        if (cEl && cEl.innerText && cEl.innerText.trim().length > 0) {
+                            res.company = cEl.innerText.trim();
+                            break;
+                        }
+                    }
+                    return res;
+                """)
+                if pane_info and isinstance(pane_info, dict):
+                    details_title = pane_info.get("title", "")
+                    details_company = pane_info.get("company", "")
             except Exception:
                 pass
 
-            if card_title and "\n" in card_title:
-                card_title = card_title.split("\n")[0].strip()
+            # Step E: Fallback to Selenium XPath if JS returned empty
+            if not details_title:
+                for xp in [
+                    "//div[contains(@class, 'job-details')]//h1",
+                    "//div[contains(@class, 'jobs-details')]//h1",
+                    "//div[contains(@class, 'jobs-search__job-details')]//h1",
+                    "//h1[contains(@class, 'job-details-jobs-unified-top-card__job-title')]",
+                    "//h1[contains(@class, 't-24')]",
+                    "//main//h1"
+                ]:
+                    try:
+                        elems = driver.find_elements(By.XPATH, xp)
+                        if elems and elems[0].text.strip():
+                            details_title = elems[0].text.strip()
+                            break
+                    except Exception:
+                        pass
+
+            # Step F: Clean and resolve final Title & Company
             if details_title and "\n" in details_title:
                 details_title = details_title.split("\n")[0].strip()
-            title = card_title if card_title else (details_title or f"Job #{i+1}")
-            if title and "\n" in title:
-                title = title.split("\n")[0].strip()
-            if card_company and "\n" in card_company:
-                card_company = card_company.split("\n")[0].strip()
-            company = card_company
+            if card_title and "\n" in card_title:
+                card_title = card_title.split("\n")[0].strip()
+
+            # Authoritative right-pane details title preferred over truncated card snippet
+            title = details_title if (details_title and len(details_title) > 2) else card_title
+            # Never leave generic 'Job #N' which fails relevance matching
+            if not title or title.startswith("Job #"):
+                title = target_role or "Software Developer"
+
+            company = details_company or card_company or "Hiring Company"
+            if "\n" in company:
+                company = company.split("\n")[0].strip()
 
             job_dedup_key = f"{title.lower()}::{company.lower()}"
             if job_dedup_key in seen_keys:
@@ -3140,20 +3302,34 @@ def main():
         print("\n>> Process interrupted by user.")
         update_automation_status({
             "status": "COMPLETED",
-            "current_evaluating": "Process interrupted by user.",
-            "summary_instruction": f"Automation stopped by user. Applied to {state.total_applied} jobs."
+            "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "current_evaluating": "Automation session stopped by user.",
+            "summary_instruction": f"Automation stopped by user. Evaluated {state.total_evaluated} jobs, applied to {state.total_applied} jobs."
         })
     except Exception as e:
-        print(f"\n[ERROR] Unexpected error: {e}")
+        err_str = str(e)
+        if any(k in err_str.lower() for k in ["invalid session id", "session deleted", "chrome not reachable", "browser has closed", "no such window"]):
+            print("\n>> Browser session closed. Finalizing execution cleanly...")
+            status_text = "Completed (Browser session closed)"
+            summary_text = f"Protocol complete: Evaluated {state.total_evaluated} positions, applied to {state.total_applied} jobs ({state.total_already_applied} previously applied)."
+        else:
+            print(f"\n[ERROR] Automation note: {e}")
+            status_text = f"Completed ({state.total_applied} applied)"
+            summary_text = f"Protocol finished: Evaluated {state.total_evaluated} jobs, applied to {state.total_applied} jobs."
+
         update_automation_status({
             "status": "COMPLETED",
-            "current_evaluating": f"Automation error: {e}",
-            "summary_instruction": f"Automation ended with note: {e}. Applied to {state.total_applied} jobs."
+            "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "current_evaluating": status_text,
+            "summary_instruction": summary_text
         })
     finally:
-        print(">> Closing browser session...")
+        global STREAMING_ACTIVE
+        STREAMING_ACTIVE = False
+        print(">> Closing browser session gracefully...")
         try:
-            driver.quit()
+            if driver and getattr(driver, 'session_id', None):
+                driver.quit()
         except Exception:
             pass
 

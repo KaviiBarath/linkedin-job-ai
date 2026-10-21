@@ -79,11 +79,22 @@ def parse_existing_config():
     
     return config
 
+@app.before_request
+def handle_preflight():
+    if request.method == 'OPTIONS':
+        resp = app.make_default_options_response()
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Headers'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Private-Network'] = 'true'
+        return resp
+
 @app.after_request
 def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Private-Network'] = 'true'
     return response
 
 @app.route('/')
@@ -306,7 +317,15 @@ def start_bot():
         except Exception as launch_err:
             print(f"Subprocess launch note: {launch_err}")
 
+    if request.is_json or request.headers.get('Accept') == 'application/json' or request.args.get('format') == 'json':
+        return jsonify({"status": "running", "message": "Automation engine launched successfully"})
+
     return redirect('/dashboard')
+
+@app.route('/launch', methods=['GET', 'POST'])
+def launch_bot():
+    """Alias for /start supporting AJAX launch from Vercel."""
+    return start_bot()
 
 def bring_chrome_window_to_front():
     """Forces the automation Chrome window to the absolute front of the Windows desktop."""

@@ -467,18 +467,13 @@
             <h1 class="logo-title">STARK <span>🚀</span></h1>
             <p class="subtitle">Autonomous AI LinkedIn & Company Job Applicant</p>
         </div>
-
-        
-        <!-- Netlify Cloud Engine Connector Bar -->
-        <div class="engine-bar" id="engine_bar" style="display:none; background:#18181b; border:1px solid #27272a; border-radius:12px; padding:12px 14px; margin-bottom:20px; font-size:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:#9e9ea7; font-weight:600;">🌐 Netlify Connected Portal</span>
-                <span id="engine_status_indicator" style="color:#ccff00; font-weight:700;">● Engine Ready</span>
+        <!-- Zero-Terminal Engine Connection Status Bar -->
+        <div id="form_bridge_bar" style="background:#0e0e17; border:1px solid #28283c; border-radius:14px; padding:12px 18px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="form_bridge_dot" style="width:10px; height:10px; border-radius:50%; background:#ccff00; display:inline-block; box-shadow:0 0 10px rgba(204,255,0,0.8);"></span>
+                <span id="form_bridge_text" style="font-size:12px; font-weight:700; color:#ffffff;">Zero-Terminal Engine Ready</span>
             </div>
-            <div style="margin-top:8px; display:flex; gap:8px;">
-                <input type="text" id="engine_url_input" placeholder="Automation Engine URL (e.g. http://127.0.0.1:5001 or Cloud URL)" style="flex:1; background:#0d0d0f; border:1px solid #3f3f46; color:#fff; padding:6px 10px; border-radius:8px; font-size:11px;" value="http://127.0.0.1:5001">
-                <button type="button" onclick="saveEngineUrl()" style="background:#ccff00; color:#000; border:none; padding:6px 12px; border-radius:8px; font-weight:700; font-size:11px; cursor:pointer;">Set</button>
-            </div>
+            <button type="button" onclick="testLocalEngineForm()" id="btn_form_test" style="background:#1e1e2c; border:1px solid #36364d; color:#ccff00; font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; cursor:pointer;">⚡ Test Engine</button>
         </div>
 
         <form action="/submit" method="POST" enctype="multipart/form-data" id="starkForm">
@@ -848,83 +843,73 @@
             btn.style.opacity = '0.85';
             btn.style.pointerEvents = 'none';
         });
-    
-        // Netlify & Cloud Engine Bridge
+
+        // Zero-Terminal Cloud-to-Local Bridge
         function getBackendBaseUrl() {
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                 return '';
             }
-            const stored = localStorage.getItem('stark_engine_url');
-            if (stored) return stored.replace(/\/+$/, '');
+            const custom = localStorage.getItem('stark_engine_url');
+            if (custom) return custom.replace(/\/+$/, '');
             return 'http://127.0.0.1:5001';
         }
 
-        function saveEngineUrl() {
-            const input = document.getElementById('engine_url_input');
-            if (input && input.value) {
-                const clean = input.value.trim().replace(/\/+$/, '');
-                localStorage.setItem('stark_engine_url', clean);
-                alert('Saved Automation Engine URL: ' + clean);
-                checkEngineHealth();
-            }
-        }
+        async function checkLocalEngine() {
+            const base = getBackendBaseUrl();
+            const dot = document.getElementById('form_bridge_dot');
+            const text = document.getElementById('form_bridge_text');
+            const form = document.getElementById('starkForm');
 
-        async function checkEngineHealth() {
-            const baseUrl = getBackendBaseUrl();
-            const indicator = document.getElementById('engine_status_indicator');
-            if (!indicator) return;
-            
-            // Browsers block async cross-origin fetch from HTTPS to plain HTTP (Mixed Content).
-            // Native form navigation bypasses this completely, so show ready state!
-            if (window.location.protocol === 'https:' && baseUrl.startsWith('http:')) {
-                indicator.textContent = '● Direct Dispatch (Ready on 127.0.0.1:5001)';
-                indicator.style.color = '#ccff00';
+            if (!base) {
+                // Running on local server directly
+                if (dot) {
+                    dot.style.background = '#ccff00';
+                    dot.style.boxShadow = '0 0 12px rgba(204,255,0,0.8)';
+                }
+                if (text) text.innerHTML = '🟢 Zero-Terminal Local Engine Ready';
                 return;
             }
 
             try {
-                const res = await fetch(baseUrl + '/status', { method: 'GET', mode: 'cors' });
-                if (res.ok) {
-                    indicator.textContent = '● Engine Online (Ready)';
-                    indicator.style.color = '#ccff00';
+                const resp = await fetch(base + '/status', { mode: 'cors', cache: 'no-store' });
+                if (resp.ok) {
+                    if (dot) {
+                        dot.style.background = '#ccff00';
+                        dot.style.boxShadow = '0 0 12px rgba(204,255,0,0.8)';
+                    }
+                    if (text) text.innerHTML = '🟢 Connected to Local Engine (Zero-Terminal Active)';
+                    if (form) form.action = base + '/submit';
                 } else {
-                    indicator.textContent = '○ Engine Standing By';
-                    indicator.style.color = '#f59e0b';
+                    throw new Error('Non-200 response');
                 }
             } catch (e) {
-                indicator.textContent = '● Direct Mode (Click Start to Launch)';
-                indicator.style.color = '#ccff00';
+                if (dot) {
+                    dot.style.background = '#ff4b4b';
+                    dot.style.boxShadow = '0 0 10px #ff4b4b';
+                }
+                if (text) text.innerHTML = '🟡 Cloud Mode: Double-click <code>Launch_Stark_Automation.vbs</code> on your PC';
+            }
+        }
+
+        async function testLocalEngineForm() {
+            const base = getBackendBaseUrl() || 'http://127.0.0.1:5001';
+            try {
+                const resp = await fetch(base + '/status', { mode: 'cors', cache: 'no-store' });
+                if (resp.ok) {
+                    alert('✓ Connected to Local Engine on ' + base + '! Ready to launch Chrome with 0 terminal windows.');
+                    checkLocalEngine();
+                } else {
+                    alert('⚠️ Local Engine offline. Double-click Launch_Stark_Automation.vbs on your PC.');
+                }
+            } catch (e) {
+                alert('⚠️ Cannot reach ' + base + '. Please make sure Launch_Stark_Automation.vbs is running on your Windows PC.');
             }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            const isExternalHost = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-            const engineBar = document.getElementById('engine_bar');
-            if (isExternalHost && engineBar) {
-                engineBar.style.display = 'block';
-                const input = document.getElementById('engine_url_input');
-                if (input) {
-                    input.value = localStorage.getItem('stark_engine_url') || 'http://127.0.0.1:5001';
-                }
-                checkEngineHealth();
-            }
-
-            // Route form submission seamlessly to the automation engine
-            const form = document.getElementById('starkForm');
-            if (form && isExternalHost) {
-                form.addEventListener('submit', function() {
-                    const btn = document.getElementById('start_btn');
-                    btn.innerHTML = '<span>LAUNCHING AUTOMATION ENGINE...</span> <span>⏳</span>';
-                    btn.style.opacity = '0.85';
-
-                    const baseUrl = getBackendBaseUrl();
-                    // Set form action directly to the automation engine endpoint
-                    form.action = baseUrl + '/submit';
-                    // Native form submission allows top-level navigation without mixed-content fetch blocking!
-                });
-            }
+            checkLocalEngine();
+            setInterval(checkLocalEngine, 3000);
         });
-
     </script>
 </body>
 
