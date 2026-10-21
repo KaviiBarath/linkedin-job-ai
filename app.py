@@ -9,13 +9,31 @@ from threading import Timer
 
 app = Flask(__name__)
 
-# File constants
+# File constants & Writable Directory Detection (Vercel / Serverless support)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DATA_FILE = os.path.join(BASE_DIR, "user_config.txt")
-STATUS_FILE = os.path.join(BASE_DIR, "automation_status.json")
+
+def get_storage_dir():
+    """Returns a guaranteed writable storage directory (uses /tmp on Vercel/serverless environments)."""
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return "/tmp"
+    try:
+        test_path = os.path.join(BASE_DIR, ".perm_test")
+        with open(test_path, "w") as f:
+            f.write("1")
+        os.remove(test_path)
+        return BASE_DIR
+    except Exception:
+        return "/tmp" if os.path.exists("/tmp") else os.environ.get("TEMP", BASE_DIR)
+
+STORAGE_DIR = get_storage_dir()
+DATA_FILE = os.path.join(STORAGE_DIR, "user_config.txt")
+STATUS_FILE = os.path.join(STORAGE_DIR, "automation_status.json")
 BOT_SCRIPT = os.path.join(BASE_DIR, "job_apply.py")
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+UPLOAD_FOLDER = os.path.join(STORAGE_DIR, "uploads")
+try:
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+except Exception:
+    pass
 
 def parse_existing_config():
     """Reads existing configuration from user_config.txt to pre-fill the form."""
@@ -36,22 +54,25 @@ def parse_existing_config():
         "links": "",
         "job_mode": "Fresher"
     }
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                for line in f:
-                    if ":" in line:
-                        k, v = line.split(":", 1)
-                        k = k.strip().lower()
-                        v = v.strip()
-                        if k == "input_resume_path":
-                            config["resume_path"] = v
-                            if v and os.path.exists(v):
-                                config["resume_name"] = os.path.basename(v)
-                        elif k in config:
-                            config[k] = v
-        except Exception:
-            pass
+    candidate_files = [DATA_FILE, os.path.join(BASE_DIR, "user_config.txt"), os.path.join("/tmp", "user_config.txt")]
+    for cf in candidate_files:
+        if os.path.exists(cf):
+            try:
+                with open(cf, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if ":" in line:
+                            k, v = line.split(":", 1)
+                            k = k.strip().lower()
+                            v = v.strip()
+                            if k == "input_resume_path":
+                                config["resume_path"] = v
+                                if v and os.path.exists(v):
+                                    config["resume_name"] = os.path.basename(v)
+                            elif k in config:
+                                config[k] = v
+                break
+            except Exception:
+                pass
 
     if not config["resume_name"] and config["resume_path"]:
         config["resume_name"] = os.path.basename(config["resume_path"])
@@ -115,7 +136,14 @@ def submit_data():
                 # Sanitize filename and save in uploads/
                 safe_name = os.path.basename(uploaded_file.filename).replace(" ", "_")
                 saved_target = os.path.join(UPLOAD_FOLDER, safe_name)
-                uploaded_file.save(saved_target)
+                try:
+                    uploaded_file.save(saved_target)
+                except Exception:
+                    # Fallback to /tmp on read-only environments (Vercel/Lambda)
+                    tmp_uploads = os.path.join("/tmp", "uploads")
+                    os.makedirs(tmp_uploads, exist_ok=True)
+                    saved_target = os.path.join(tmp_uploads, safe_name)
+                    uploaded_file.save(saved_target)
                 resume_path = os.path.abspath(saved_target)
 
             # Fallback to existing saved config if not provided
@@ -155,8 +183,15 @@ def submit_data():
             
             file_content = "\n".join(lines)
 
-            with open(DATA_FILE, "w", encoding="utf-8") as file:
-                file.write(file_content)
+            try:
+                with open(DATA_FILE, "w", encoding="utf-8") as file:
+                    file.write(file_content)
+            except Exception:
+                try:
+                    with open(os.path.join("/tmp", "user_config.txt"), "w", encoding="utf-8") as file:
+                        file.write(file_content)
+                except Exception:
+                    pass
 
             mode_label = {
                 "easy_apply": "Easy Apply (LinkedIn Native)",
@@ -186,13 +221,29 @@ def submit_data():
                 with open(STATUS_FILE, "w", encoding="utf-8") as sf:
                     json.dump(initial_status, sf, indent=2)
             except Exception:
-                pass
+                try:
+                    with open(os.path.join("/tmp", "automation_status.json"), "w", encoding="utf-8") as sf:
+                        json.dump(initial_status, sf, indent=2)
+                except Exception:
+                    pass
             
             # Launch automation runner cleanly without opening a terminal window
-            log_path = os.path.join(BASE_DIR, "bot_execution.log")
-            log_f = open(log_path, "a", encoding="utf-8")
-            creationflags = 0x08000000 if sys.platform == "win32" else 0
-            subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, stdout=log_f, stderr=log_f, creationflags=creationflags)
+            try:
+                log_path = os.path.join(STORAGE_DIR, "bot_execution.log")
+                log_f = open(log_path, "a", encoding="utf-8")
+            except Exception:
+                log_f = open(os.path.join("/tmp", "bot_execution.log"), "a", encoding="utf-8")
+
+            # In cloud serverless (Vercel / Lambda), background desktop Chrome cannot run
+            is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+            if is_serverless:
+                print("[*] Running on Vercel Serverless.")
+            else:
+                try:
+                    creationflags = 0x08000000 if sys.platform == "win32" else 0
+                    subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, stdout=log_f, stderr=log_f, creationflags=creationflags)
+                except Exception as launch_err:
+                    print(f"Subprocess launch note: {launch_err}")
 
             # Redirect immediately to the live monitoring dashboard
             return redirect('/dashboard')
@@ -235,12 +286,25 @@ def start_bot():
         with open(STATUS_FILE, "w", encoding="utf-8") as sf:
             json.dump(initial_status, sf, indent=2)
     except Exception:
-        pass
+        try:
+            with open(os.path.join("/tmp", "automation_status.json"), "w", encoding="utf-8") as sf:
+                json.dump(initial_status, sf, indent=2)
+        except Exception:
+            pass
 
-    log_path = os.path.join(BASE_DIR, "bot_execution.log")
-    log_f = open(log_path, "a", encoding="utf-8")
-    creationflags = 0x08000000 if sys.platform == "win32" else 0
-    subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, stdout=log_f, stderr=log_f, creationflags=creationflags)
+    try:
+        log_path = os.path.join(STORAGE_DIR, "bot_execution.log")
+        log_f = open(log_path, "a", encoding="utf-8")
+    except Exception:
+        log_f = open(os.path.join("/tmp", "bot_execution.log"), "a", encoding="utf-8")
+
+    is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+    if not is_serverless:
+        try:
+            creationflags = 0x08000000 if sys.platform == "win32" else 0
+            subprocess.Popen([sys.executable, "-u", BOT_SCRIPT], cwd=BASE_DIR, stdout=log_f, stderr=log_f, creationflags=creationflags)
+        except Exception as launch_err:
+            print(f"Subprocess launch note: {launch_err}")
 
     return redirect('/dashboard')
 

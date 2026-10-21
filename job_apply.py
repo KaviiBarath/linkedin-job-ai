@@ -49,9 +49,29 @@ driver: Any = None
 
 #----------------- Configuration & Resume Intelligence -----------------
 
+def get_storage_dir():
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return "/tmp"
+    base = os.path.dirname(os.path.abspath(__file__))
+    try:
+        test_path = os.path.join(base, ".perm_test")
+        with open(test_path, "w") as f:
+            f.write("1")
+        os.remove(test_path)
+        return base
+    except Exception:
+        return "/tmp" if os.path.exists("/tmp") else os.environ.get("TEMP", base)
+
+STORAGE_DIR = get_storage_dir()
+
 def load_config():
     """Reads configuration safely from user_config.txt by key-value pairs."""
-    config_file = "user_config.txt"
+    config_file = os.path.join(STORAGE_DIR, "user_config.txt")
+    if not os.path.exists(config_file):
+        for alt in ["user_config.txt", os.path.join("/tmp", "user_config.txt")]:
+            if os.path.exists(alt):
+                config_file = alt
+                break
     if not os.path.exists(config_file) and os.path.exists("user_config.example.txt"):
         try:
             import shutil
@@ -227,7 +247,7 @@ JOB_MODE          = CONFIG.get("JOB_MODE", "Fresher")
 
 #----------------- Real-Time Live Status Tracking & Interface Reporting -----------------
 
-STATUS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "automation_status.json")
+STATUS_FILE = os.path.join(STORAGE_DIR, "automation_status.json")
 
 class AutomationState:
     """Strongly-typed runtime state tracker for automation execution."""
