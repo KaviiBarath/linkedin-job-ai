@@ -183,7 +183,9 @@ def build_candidate_profile(config):
         "alt_city": "Coimbatore, Tamil Nadu, India",
         "apply_mode": config.get("APPLY_MODE", "easy_apply").strip(),
         "job_mode": job_mode_val,
-        "degree": "Bachelor of Information Technology",
+        "degree": "BSc IT (Information Technology)",
+        "major": "Information Technology",
+        "field_of_study": "Information Technology",
         "college": "Kamalam College of Arts and Science (Bharathiar University)",
         "university": "Bharathiar University",
         "graduation_year": "2025",
@@ -202,7 +204,7 @@ def build_candidate_profile(config):
         "gpa": "75",
         "resume_path": resume_path,
         "resume_text": "",
-        "summary": "Detail-oriented Computer Science and IT graduate seeking an entry-level Java Developer role with hands-on skills in Java, OOP, database management, and software testing."
+        "summary": "Detail-oriented Information Technology (BSc IT) graduate seeking an entry-level Java Developer role with hands-on skills in Java, OOP, database management, and software testing."
     }
 
     # Extract dynamic info from resume if pypdf is available
@@ -262,15 +264,58 @@ def build_candidate_profile(config):
                 profile["first_name"] = parts[0]
                 profile["last_name"] = " ".join(parts[1:])
 
-            # Degree detection
-            deg_match = re.search(r'\b(B\.?E\.?|B\.?Tech|B\.?Sc|BCA|M\.?Tech|MCA|Bachelor of Engineering|Bachelor of Technology)\b', raw_text, re.IGNORECASE)
-            detected_degree = deg_match.group(0) if deg_match else "B.E. Computer Science"
+            # Comprehensive Degree & Qualification Detection from Resume
+            degree_candidates = [
+                (r'Bachelor\s+of\s+Information\s+Technology', 'BSc IT (Information Technology)'),
+                (r'B\.?Sc\.?\s*(?:IT|Information\s+Technology)', 'BSc IT (Information Technology)'),
+                (r'B\.?Sc\.?\s*(?:CS|Computer\s+Science)', 'BSc Computer Science'),
+                (r'Information\s+Technology', 'BSc IT (Information Technology)'),
+                (r'B\.?Sc\.?', 'BSc IT (Information Technology)'),
+                (r'B\.?Tech\.?\s*(?:IT|Information\s+Technology)', 'B.Tech Information Technology'),
+                (r'B\.?Tech\.?', 'B.Tech Computer Science'),
+                (r'B\.?E\.?', 'B.E. Computer Science'),
+                (r'BCA', 'BCA (Bachelor of Computer Applications)'),
+                (r'MCA', 'MCA (Master of Computer Applications)'),
+                (r'Bachelor\s+of\s+Science', 'BSc IT (Information Technology)'),
+                (r'Bachelor\s+of\s+Computer', 'BCA (Bachelor of Computer Applications)'),
+                (r'Bachelor\s+of\s+Technology', 'B.Tech Information Technology'),
+                (r'Bachelor\s+of\s+Engineering', 'B.E. Computer Science'),
+            ]
+            detected_degree = ""
+            for pat, deg_lbl in degree_candidates:
+                if re.search(pat, raw_text, re.IGNORECASE):
+                    detected_degree = deg_lbl
+                    break
+            if not detected_degree:
+                detected_degree = "BSc IT (Information Technology)"
+
+            # College & University Detection
+            detected_college = "Kamalam College of Arts and Science"
+            if "kamalam" in raw_text.lower():
+                detected_college = "Kamalam College of Arts and Science (Bharathiar University)"
+            detected_univ = "Bharathiar University" if "bharathiar" in raw_text.lower() else "Bharathiar University"
+
+            # Year Detection
+            year_match = re.search(r'202[2-6]\s*[–\-—]\s*(202[4-9])', raw_text)
+            grad_year = year_match.group(1) if year_match else "2025"
+
+            # Set in profile for automatic form filling
+            profile["degree"] = detected_degree
+            profile["major"] = "Information Technology"
+            profile["field_of_study"] = "Information Technology"
+            profile["college"] = detected_college
+            profile["university"] = detected_univ
+            profile["graduation_year"] = grad_year
 
             profile["resume_analysis"] = {
                 "candidate_name": f"{profile.get('first_name', '')} {profile.get('last_name', '')}".strip() or "Barath R",
                 "email": profile.get("email", ""),
                 "phone": profile.get("phone", ""),
                 "degree": detected_degree,
+                "major": "Information Technology",
+                "college": detected_college,
+                "university": detected_univ,
+                "graduation_year": grad_year,
                 "detected_skills": detected_skills or ["Java", "Python", "SQL", "OOP"],
                 "total_skills_count": len(detected_skills),
                 "experience_mode": config.get("JOB_MODE", "Fresher"),
@@ -685,12 +730,25 @@ def is_logged_in():
     """Checks whether the browser is currently authenticated to LinkedIn."""
     try:
         cur = driver.current_url.lower()
-        if any(p in cur for p in ["/feed", "/jobs", "/mynetwork", "/messaging"]):
-            return True
-        nav = driver.find_elements(
+        if any(p in cur for p in ["/login", "/signup", "/uas/login", "/checkpoint", "/challenge"]):
+            return False
+        # Profile menu or global authenticated navigation
+        me_icon = driver.find_elements(
             By.XPATH,
-            "//nav[contains(@class, 'global-nav')] | //button[contains(@class, 'global-nav__me')] | //div[contains(@class, 'feed-identity-module')]"
+            "//button[contains(@class, 'global-nav__me')] | //img[contains(@class, 'global-nav__me-photo')] | //div[contains(@class, 'feed-identity-module')]"
         )
+        if me_icon and any(m.is_displayed() for m in me_icon):
+            return True
+        # Check for unauthenticated sign-in buttons on page
+        unauth_btns = driver.find_elements(
+            By.XPATH,
+            "//a[contains(@href, 'login') and contains(@class, 'nav__button')] | //a[contains(@href, 'signup')] | //button[contains(., 'Sign in') and not(contains(@class, 'global-nav'))]"
+        )
+        if unauth_btns and any(b.is_displayed() for b in unauth_btns):
+            return False
+        if any(p in cur for p in ["/feed", "/mynetwork", "/messaging"]):
+            return True
+        nav = driver.find_elements(By.XPATH, "//nav[contains(@class, 'global-nav')]")
         return len(nav) > 0
     except Exception:
         return False
@@ -698,7 +756,7 @@ def is_logged_in():
 #----------------- Login Functionality -----------------
 
 def login_to_linkedin(user_id, password):
-    """Directly and reliably logs into LinkedIn, with 2FA / CAPTCHA support."""
+    """Directly and reliably logs into LinkedIn, with 2FA / CAPTCHA support and real-time dashboard notifications."""
     print("\n" + "=" * 55)
     print(">> [1/3] CHECKING LINKEDIN LOGIN STATUS...")
     print("=" * 55)
@@ -708,11 +766,22 @@ def login_to_linkedin(user_id, password):
         time.sleep(3)
         if is_logged_in():
             print("[OK] [LOGIN] Already logged in to LinkedIn (persistent session active)!")
+            update_automation_status({
+                "requires_manual_login": False,
+                "manual_action_message": "",
+                "current_evaluating": "✅ Persistent LinkedIn session active. Starting job search..."
+            })
             return True
     except Exception as e:
         print(f"   (Session check note: {e})")
 
     print(">> [LOGIN] Not currently logged in. Navigating to Sign-in page...")
+    update_automation_status({
+        "requires_manual_login": True,
+        "manual_action_message": "🔔 ACTION NEEDED: LinkedIn Sign-in or Sign-up detected in Chrome. Please complete it in the opened Chrome window. The bot is actively waiting for your session!",
+        "current_evaluating": "🔔 Waiting for LinkedIn Sign-in / Sign-up in Chrome window..."
+    })
+    bring_window_to_foreground(driver)
     driver.get("https://www.linkedin.com/login?locale=en_US")
     time.sleep(3)
 
@@ -749,9 +818,9 @@ def login_to_linkedin(user_id, password):
         if password_input:
             break
 
-    if username_input and password_input:
+    if username_input and password_input and user_id and password:
         print(f">> [LOGIN] Visually entering credentials for {user_id}...")
-        update_automation_status({"current_evaluating": f"Logging into LinkedIn as {user_id}..."})
+        update_automation_status({"current_evaluating": f"Entering LinkedIn credentials for {user_id}..."})
         try:
             driver.execute_script("arguments[0].style.outline = '3px solid #ccff00';", username_input)
         except Exception:
@@ -815,11 +884,11 @@ def login_to_linkedin(user_id, password):
             except Exception:
                 pass
     else:
-        print("[!] Could not automatically detect standard login fields.")
-        print("[*] If prompted on screen, please log in manually.")
+        print("[!] Standard credentials not filled automatically. User manual sign-in / sign-up active.")
+        print("[*] Please complete sign-in or sign-up in the Chrome window.")
 
-    print(">> [LOGIN] Verifying authentication...")
-    max_wait = 90
+    print(">> [LOGIN] Verifying authentication (waiting up to 180s for manual login / sign-up / 2FA)...")
+    max_wait = 180
     start_time = time.time()
     security_prompted = False
 
@@ -830,6 +899,11 @@ def login_to_linkedin(user_id, password):
 
         if is_logged_in():
             print("[OK] [LOGIN] Login successful! Session is now saved.")
+            update_automation_status({
+                "requires_manual_login": False,
+                "manual_action_message": "",
+                "current_evaluating": "✅ LinkedIn Session Verified! Starting targeted job search..."
+            })
             time.sleep(2)
             return True
 
@@ -849,7 +923,11 @@ def login_to_linkedin(user_id, password):
                 print(">> The bot will automatically detect completion and continue!")
                 print("!" * 60 + "\n")
                 security_prompted = True
-                update_automation_status({"current_evaluating": "🔒 Action Needed: LinkedIn 2FA / Verification detected. Please solve in Chrome window (Bot will resume automatically!)"})
+                update_automation_status({
+                    "requires_manual_login": True,
+                    "manual_action_message": "🔒 ACTION REQUIRED: LinkedIn Security Check / 2FA detected. Please solve puzzle or enter code in Chrome window (Bot will resume automatically!)",
+                    "current_evaluating": "🔒 Waiting for LinkedIn 2FA / Verification in Chrome window..."
+                })
                 bring_window_to_foreground(driver)
             continue
 
@@ -858,15 +936,29 @@ def login_to_linkedin(user_id, password):
             "//div[contains(@class, 'alert--error') or contains(@id, 'error-for-password') or contains(@id, 'error-for-username')]"
         )
         if error_elems and any(e.is_displayed() for e in error_elems):
-            print("[ERROR] [LOGIN ERROR] Invalid username or password in user_config.txt!")
-            print("[*] Please verify your login credentials.")
-            return False
+            print("[*] Notice: Please log in or sign up manually in Chrome.")
+            update_automation_status({
+                "requires_manual_login": True,
+                "manual_action_message": "🔔 ACTION NEEDED: Please complete your LinkedIn sign-in or sign-up in Chrome. The bot will auto-resume once logged in!",
+                "current_evaluating": "🔔 Waiting for manual LinkedIn Sign-in / Sign-up in Chrome..."
+            })
+            bring_window_to_foreground(driver)
 
     if is_logged_in():
         print("[OK] [LOGIN] Authenticated successfully!")
+        update_automation_status({
+            "requires_manual_login": False,
+            "manual_action_message": "",
+            "current_evaluating": "✅ LinkedIn Session Verified! Starting targeted job search..."
+        })
         return True
     else:
-        print("[!] Proceeding with session check...")
+        print("[!] Proceeding with current session state...")
+        update_automation_status({
+            "requires_manual_login": False,
+            "manual_action_message": "",
+            "current_evaluating": "Proceeding with job search session..."
+        })
         return True
 
 #----------------- Easy Apply & Button Recognition -----------------
@@ -1316,13 +1408,45 @@ def get_fast_gemini_answer(question_text, input_type="text", profile=None, optio
         GEMINI_ANSWER_CACHE[norm_key] = ans
         return ans
 
-    if any(k in q_lower for k in ["college", "university", "institute"]):
-        ans = profile.get("university", "Bharathiar University")
+    # College / University / School / Institute
+    if any(k in q_lower for k in ["college", "university", "institute", "school", "institution", "campus"]):
+        ans = profile.get("college", "Kamalam College of Arts and Science (Bharathiar University)")
+        if options:
+            for opt in options:
+                opt_l = opt.lower()
+                if any(w in opt_l for w in ["kamalam", "bharathiar", "arts and science"]):
+                    ans = opt
+                    break
         GEMINI_ANSWER_CACHE[norm_key] = ans
         return ans
 
-    if any(k in q_lower for k in ["degree", "major", "graduation"]):
-        ans = profile.get("degree", "Bachelor of Information Technology")
+    # Major / Field of Study / Stream / Branch / Specialization -> Information Technology
+    if any(k in q_lower for k in ["major", "field of study", "stream", "branch", "specialization", "discipline", "department"]):
+        ans = profile.get("major", "Information Technology")
+        if options:
+            for opt in options:
+                opt_l = opt.lower()
+                if any(w in opt_l for w in ["information technology", "it", "computer"]):
+                    ans = opt
+                    break
+        GEMINI_ANSWER_CACHE[norm_key] = ans
+        return ans
+
+    # Degree / Highest Qualification / Education Level -> BSc IT (Information Technology)
+    if any(k in q_lower for k in ["degree", "qualification", "highest qualification", "education level", "highest degree", "educational level"]):
+        ans = profile.get("degree", "BSc IT (Information Technology)")
+        if options:
+            for opt in options:
+                opt_l = opt.lower()
+                if any(w in opt_l for w in ["information technology", "b.sc it", "bsc it", "bachelor of science", "b.sc", "bsc", "bachelor", "undergraduate", "graduate"]):
+                    ans = opt
+                    break
+        GEMINI_ANSWER_CACHE[norm_key] = ans
+        return ans
+
+    # Year of Graduation / Passing Year -> 2025
+    if any(k in q_lower for k in ["graduation", "passing year", "year of pass", "grad year", "year of completion", "completion year"]):
+        ans = profile.get("graduation_year", "2025")
         GEMINI_ANSWER_CACHE[norm_key] = ans
         return ans
 
@@ -1341,7 +1465,8 @@ def get_fast_gemini_answer(question_text, input_type="text", profile=None, optio
         try:
             opt_prompt = f" Options: {', '.join(options)}." if options else ""
             prompt = (
-                f"Candidate Profile: Name={profile.get('name')}, Role=Java/Python Developer, "
+                f"Candidate Profile: Name={profile.get('first_name')} {profile.get('last_name')}, Role=Java/Python Developer, "
+                f"Degree={profile.get('degree')}, Major={profile.get('major')}, College={profile.get('college')}, GradYear={profile.get('graduation_year')}, "
                 f"Mode={JOB_MODE}, Exp={years_exp} yrs, Loc={profile.get('city')}, "
                 f"Notice={profile.get('notice_period')}, WorkAuth=Yes, VisaSponsor=No.\n"
                 f"Question: '{raw_q}'.{opt_prompt}\n"
@@ -1801,11 +1926,19 @@ def smart_fill_company_form(context, profile):
                                 sel.select_by_visible_text(opt.text)
                                 selected = True
                                 break
-                    # Highest degree / Education -> Bachelor
+                    # Major / Field of Study
+                    elif any(k in parent_txt for k in ["major", "field of study", "stream", "branch", "specialization"]):
+                        for opt in sel.options:
+                            t = opt.text.strip().lower()
+                            if any(w in t for w in ["information technology", "it", "computer science", "computer"]):
+                                sel.select_by_visible_text(opt.text)
+                                selected = True
+                                break
+                    # Highest degree / Education -> Bachelor / BSc IT
                     elif any(k in parent_txt for k in ["degree", "education", "qualification"]):
                         for opt in sel.options:
                             t = opt.text.strip().lower()
-                            if any(w in t for w in ["bachelor", "undergraduate", "degree", "b.tech", "b.e", "information technology"]):
+                            if any(w in t for w in ["information technology", "b.sc it", "bsc it", "bachelor of science", "b.sc", "bsc", "bachelor", "undergraduate"]):
                                 sel.select_by_visible_text(opt.text)
                                 selected = True
                                 break
@@ -1982,14 +2115,16 @@ def smart_fill_company_form(context, profile):
             elif any(k in combined for k in ["current role", "job title", "designation", "current designation"]):
                 ans = "Software Developer (Fresher)"
             # Education
-            elif any(k in combined for k in ["degree", "qualification", "highest qualification", "major", "field of study", "stream"]):
-                ans = profile["degree"]
-            elif any(k in combined for k in ["college", "university", "school", "institution", "institute"]):
-                ans = profile["college"]
+            elif any(k in combined for k in ["major", "field of study", "stream", "branch", "specialization"]):
+                ans = profile.get("major", "Information Technology")
+            elif any(k in combined for k in ["degree", "qualification", "highest qualification", "highest degree", "education level"]):
+                ans = profile.get("degree", "BSc IT (Information Technology)")
+            elif any(k in combined for k in ["college", "university", "school", "institution", "institute", "campus"]):
+                ans = profile.get("college", "Kamalam College of Arts and Science (Bharathiar University)")
             elif any(k in combined for k in ["graduation", "passing year", "year of pass", "grad year", "year of graduation"]):
-                ans = profile["graduation_year"]
+                ans = profile.get("graduation_year", "2025")
             elif any(k in combined for k in ["cgpa", "gpa", "percentage", "marks", "score"]):
-                ans = profile["gpa"]
+                ans = profile.get("gpa", "75")
             # Skill Experience Matches
             elif any(s.lower() in combined for s in profile.get("skills", [])):
                 ans = profile["experience_years"] if profile["experience_years"] != "0" else "1"

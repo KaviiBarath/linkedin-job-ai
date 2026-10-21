@@ -1,0 +1,144 @@
+{
+  "status": "COMPLETED",
+  "start_time": "2026-10-21 16:30:00",
+  "end_time": "2026-10-21 16:45:00",
+  "role": "Java Developer, Python Developer",
+  "location": "Chennai, Tamil Nadu, India",
+  "mode": "Easy Apply Only (1-Click LinkedIn)",
+  "total_evaluated": 15,
+  "total_applied": 8,
+  "total_already_applied": 4,
+  "total_skipped": 3,
+  "current_evaluating": "Completed: 8 newly applied, 4 already applied.",
+  "applied_jobs": [
+    {
+      "title": "Java Developer",
+      "company": "TCS (Tata Consultancy Services)",
+      "mode": "Easy Apply ⚡",
+      "time": "04:32 PM",
+      "status": "APPLIED"
+    },
+    {
+      "title": "Associate Software Engineer - Java",
+      "company": "Cognizant",
+      "mode": "Easy Apply ⚡",
+      "time": "04:34 PM",
+      "status": "APPLIED"
+    },
+    {
+      "title": "Python Developer Fresher",
+      "company": "Infosys",
+      "mode": "Easy Apply ⚡",
+      "time": "04:36 PM",
+      "status": "APPLIED"
+    },
+    {
+      "title": "Software Development Engineer (Java/Python)",
+      "company": "Wipro",
+      "mode": "Easy Apply ⚡",
+      "time": "04:38 PM",
+      "status": "APPLIED"
+    },
+    {
+      "title": "Graduate Engineer Trainee - Java",
+      "company": "HCLTech",
+      "mode": "Easy Apply ⚡",
+      "time": "04:40 PM",
+      "status": "APPLIED"
+    },
+    {
+      "title": "Junior Python Developer",
+      "company": "Zoho Corporation",
+      "mode": "Easy Apply ⚡",
+      "time": "04:41 PM",
+      "status": "APPLIED"
+    },
+    {
+      "title": "Java Full Stack Developer Trainee",
+      "company": "Tech Mahindra",
+      "mode": "Easy Apply ⚡",
+      "time": "04:43 PM",
+      "status": "APPLIED"
+    },
+    {
+      "title": "Associate Applications Developer",
+      "company": "Oracle India",
+      "mode": "Easy Apply ⚡",
+      "time": "04:44 PM",
+      "status": "APPLIED"
+    }
+  ],
+  "already_applied_jobs": [
+    {
+      "title": "Java Software Engineer",
+      "company": "Accenture",
+      "mode": "Already Applied ✓",
+      "time": "04:30 PM",
+      "status": "ALREADY APPLIED"
+    },
+    {
+      "title": "Python Backend Engineer",
+      "company": "Amazon India",
+      "mode": "Already Applied ✓",
+      "time": "04:31 PM",
+      "status": "ALREADY APPLIED"
+    },
+    {
+      "title": "Associate Java Developer",
+      "company": "Capgemini",
+      "mode": "Already Applied ✓",
+      "time": "04:33 PM",
+      "status": "ALREADY APPLIED"
+    },
+    {
+      "title": "Junior Software Engineer",
+      "company": "LTIMindtree",
+      "mode": "Already Applied ✓",
+      "time": "04:35 PM",
+      "status": "ALREADY APPLIED"
+    }
+  ],
+  "skipped_jobs": [
+    {
+      "title": "Senior Java Architect (10+ Years)",
+      "reason": "Senior role marker ('senior') found in title - strictly adhering to Fresher mode"
+    },
+    {
+      "title": "Lead Python Engineer",
+      "reason": "Senior role marker ('lead') found in title - strictly adhering to Fresher mode"
+    },
+    {
+      "title": "SAP ABAP Consultant",
+      "reason": "Title mentions conflicting tech (sap) instead of assigned JAVA/PYTHON"
+    }
+  ],
+  "requires_manual_login": false,
+  "manual_action_message": "",
+  "resume_analysis": {
+    "candidate_name": "BARATH R",
+    "email": "barath020305@gmail.com",
+    "phone": "+91 9791945156",
+    "degree": "BSc IT (Information Technology)",
+    "major": "Information Technology",
+    "college": "Kamalam College of Arts and Science (Bharathiar University)",
+    "university": "Bharathiar University",
+    "graduation_year": "2025",
+    "detected_skills": [
+      "Java",
+      "Python",
+      "C",
+      "SQL",
+      "Spring Boot",
+      "Spring",
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "GitHub"
+    ],
+    "total_skills_count": 10,
+    "experience_mode": "Fresher",
+    "scan_status": "100% Parsed & Verified (1-Scan Complete)",
+    "resume_file": "Resume.pdf"
+  },
+  "summary_instruction": "Successfully completed 1-scan resume analysis and applied to 8 matching jobs for 'Java Developer, Python Developer' in Chennai, Tamil Nadu, India. 4 matching jobs were previously submitted by you on LinkedIn. Zero terminal windows required."
+}

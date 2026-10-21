@@ -872,11 +872,13 @@
             </div>
             <span style="background:rgba(204,255,0,0.15); color:#ccff00; border:1px solid rgba(204,255,0,0.35); font-size:11px; font-weight:700; padding:4px 12px; border-radius:100px;" id="resume_scan_status_badge">✓ 1-SCAN 100% READY</span>
         </div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; font-size:12px; color:#cbd5e1; margin-bottom:12px; background:#141422; padding:12px 14px; border-radius:10px; border:1px solid #1f1f33;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; font-size:12px; color:#cbd5e1; margin-bottom:12px; background:#141422; padding:12px 14px; border-radius:10px; border:1px solid #1f1f33;">
             <div>👤 <strong>Candidate:</strong> <span id="intel_name" style="color:#ffffff;">Barath R</span></div>
-            <div>🎓 <strong>Degree:</strong> <span id="intel_degree" style="color:#ffffff;">B.E. Computer Science</span></div>
-            <div>📧 <strong>Email:</strong> <span id="intel_email" style="color:#ffffff;">barath0144@gmail.com</span></div>
-            <div>📞 <strong>Phone:</strong> <span id="intel_phone" style="color:#ffffff;">+91 9789123456</span></div>
+            <div>🎓 <strong>Degree:</strong> <span id="intel_degree" style="color:#ccff00; font-weight:700;">BSc IT (Information Technology)</span></div>
+            <div>📚 <strong>Major:</strong> <span id="intel_major" style="color:#ffffff;">Information Technology</span></div>
+            <div>🏛️ <strong>College:</strong> <span id="intel_college" style="color:#ffffff;">Kamalam College of Arts and Science</span></div>
+            <div>📧 <strong>Email:</strong> <span id="intel_email" style="color:#ffffff;">barath020305@gmail.com</span></div>
+            <div>📞 <strong>Phone:</strong> <span id="intel_phone" style="color:#ffffff;">+91 9791945156</span></div>
         </div>
         <div>
             <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#94a3b8; margin-bottom:6px;">Detected Technical Skills &amp; Domain Inventory:</div>
@@ -925,6 +927,26 @@
         <span style="color: var(--text-muted); font-size: 11px;">AUTO-REFRESH: 1.5s</span>
     </div>
 
+    <!-- LinkedIn Manual Action Alert Banner (Sign-in / Sign-up / 2FA Prompt) -->
+    <div id="manual_login_alert" style="display:none; background:linear-gradient(135deg, rgba(245,158,11,0.22), rgba(180,83,9,0.28)); border:2px solid #f59e0b; border-radius:14px; padding:18px 22px; margin-bottom:18px; box-shadow:0 0 30px rgba(245,158,11,0.3);">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+                <span style="font-size:32px;">🔔</span>
+                <div>
+                    <div style="font-size:15px; font-weight:800; color:#fbbf24; text-transform:uppercase; letter-spacing:0.5px;">Manual Action Required in Chrome</div>
+                    <div style="font-size:13px; color:#fef3c7; line-height:1.5; margin-top:2px;" id="manual_login_msg">
+                        LinkedIn Sign-in or Sign-up is open in the Chrome window. Please switch to Chrome and complete your login or registration. The bot is actively waiting for your session and will automatically resume!
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button type="button" onclick="bringChromeToFront()" style="background:#f59e0b; color:#000; font-weight:800; font-size:12px; padding:10px 18px; border-radius:8px; border:none; cursor:pointer; box-shadow:0 4px 12px rgba(245,158,11,0.4);">
+                    👁️ Focus Desktop Chrome
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Full-Width Command Center Live Chrome Automation Monitor -->
     <section class="cinema-monitor-card" id="cinema_monitor_card">
         <div class="cinema-header">
@@ -943,6 +965,9 @@
                 <button type="button" onclick="openLiveScreenTab()" style="background:#1b1b26; border:1px solid #333346; color:#cbd5e1; padding:7px 12px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer;">
                     🔗 Open Tab
                 </button>
+                <button type="button" onclick="window.open('http://127.0.0.1:5001/dashboard', '_blank')" style="background:#1a202c; border:1px solid #4a5568; color:#90cdf4; padding:7px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;" title="Open local dashboard running on PC">
+                    ⚡ Local Host (5001)
+                </button>
                 <button type="button" onclick="bringChromeToFront()" id="btn_focus_chrome" style="background:#ccff00; color:#000; border:none; padding:7px 14px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">
                     👁️ Focus Desktop Chrome
                 </button>
@@ -953,7 +978,7 @@
         </div>
 
         <div class="cinema-screen-wrap">
-            <img id="live_stream_img" src="/live-screen" alt="Live Chrome Screen Feed" onclick="toggleTheaterMode()" title="Click to expand / enter full Theater Mode">
+            <img id="live_stream_img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='960' height='540' viewBox='0 0 960 540'><rect width='960' height='540' fill='%230b0b14'/><rect x='2' y='2' width='956' height='536' fill='none' stroke='%23222238' stroke-width='2' rx='12'/><circle cx='480' cy='220' r='52' fill='%23161624' stroke='%23383854' stroke-width='2'/><text x='480' y='232' fill='%23ccff00' font-family='sans-serif' font-size='38' text-anchor='middle'>⚡</text><text x='480' y='310' fill='%23ffffff' font-family='sans-serif' font-size='20' font-weight='700' text-anchor='middle'>CHROME LIVE BROADCAST ENGINE</text><text x='480' y='338' fill='%2394a3b8' font-family='sans-serif' font-size='13' text-anchor='middle'>Double-click Launch_Stark_Automation.vbs on your PC to connect direct 1080p stream</text><text x='480' y='362' fill='%2364748b' font-family='monospace' font-size='11' text-anchor='middle'>Auto-reconnect active • Local host: 127.0.0.1:5001</text></svg>" alt="Live Chrome Screen Feed" onerror="handleLiveStreamError(this)" onclick="toggleTheaterMode()" title="Click to expand / enter full Theater Mode">
             
             <!-- Real-Time HUD Overlay on Live Stream -->
             <div class="cinema-hud-overlay">
@@ -1106,6 +1131,8 @@
                 if (card) card.style.display = 'block';
                 if (ra.candidate_name) document.getElementById('intel_name').innerText = ra.candidate_name;
                 if (ra.degree) document.getElementById('intel_degree').innerText = ra.degree;
+                if (ra.major && document.getElementById('intel_major')) document.getElementById('intel_major').innerText = ra.major;
+                if (ra.college && document.getElementById('intel_college')) document.getElementById('intel_college').innerText = ra.college;
                 if (ra.email) document.getElementById('intel_email').innerText = ra.email;
                 if (ra.phone) document.getElementById('intel_phone').innerText = ra.phone;
                 if (ra.resume_file) document.getElementById('resume_intel_file').innerText = `${ra.resume_file} • 1-Scan Profile Pre-Solved`;
@@ -1116,6 +1143,25 @@
                             <span style="background:#1a1a2b; border:1px solid #33334d; color:#ccff00; font-size:11px; font-weight:600; padding:3px 9px; border-radius:6px;">${escapeHtml(s)}</span>
                         `).join('');
                     }
+                }
+            }
+
+            // Check if manual login/sign-up/2FA is required
+            const manAlert = document.getElementById('manual_login_alert');
+            const manMsg = document.getElementById('manual_login_msg');
+            const hudTitle = document.getElementById('hud_title');
+            if (data.requires_manual_login) {
+                if (manAlert) manAlert.style.display = 'block';
+                if (manMsg && data.manual_action_message) manMsg.innerText = data.manual_action_message;
+                if (hudTitle) {
+                    hudTitle.innerHTML = '🔔 MANUAL ACTION: LINKEDIN SIGN-IN / SIGN-UP NEEDED';
+                    hudTitle.style.color = '#f59e0b';
+                }
+            } else {
+                if (manAlert) manAlert.style.display = 'none';
+                if (hudTitle && data.status !== 'COMPLETED') {
+                    hudTitle.innerHTML = '● LIVE AUTOMATION ACTIVE';
+                    hudTitle.style.color = '#ccff00';
                 }
             }
 
@@ -1278,9 +1324,16 @@
         }
     });
 
+    const STANDBY_SCREEN_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='960' height='540' viewBox='0 0 960 540'><rect width='960' height='540' fill='%230b0b14'/><rect x='2' y='2' width='956' height='536' fill='none' stroke='%23222238' stroke-width='2' rx='12'/><circle cx='480' cy='220' r='52' fill='%23161624' stroke='%23383854' stroke-width='2'/><text x='480' y='232' fill='%23ccff00' font-family='sans-serif' font-size='38' text-anchor='middle'>⚡</text><text x='480' y='310' fill='%23ffffff' font-family='sans-serif' font-size='20' font-weight='700' text-anchor='middle'>CHROME LIVE BROADCAST ENGINE</text><text x='480' y='338' fill='%2394a3b8' font-family='sans-serif' font-size='13' text-anchor='middle'>Double-click Launch_Stark_Automation.vbs on your PC to connect direct 1080p stream</text><text x='480' y='362' fill='%2364748b' font-family='monospace' font-size='11' text-anchor='middle'>Auto-reconnect active • Local host: 127.0.0.1:5001</text></svg>";
+
+    function handleLiveStreamError(img) {
+        if (!img) return;
+        img.src = STANDBY_SCREEN_SVG;
+    }
+
     function openLiveScreenTab() {
         const base = getBackendBaseUrl();
-        window.open(base + '/live-screen?t=' + Date.now(), '_blank');
+        window.open(base + '/dashboard', '_blank');
     }
 
     async function bringChromeToFront() {
@@ -1297,13 +1350,35 @@
         }, 1200);
     }
 
-    function refreshLiveScreen() {
+    let isStreamActive = false;
+    async function refreshLiveScreen() {
         const img = document.getElementById('live_stream_img');
-        if (img) {
-            const base = getBackendBaseUrl();
-            img.src = base + '/live-screen?t=' + Date.now();
+        if (!img) return;
+        const base = getBackendBaseUrl();
+        try {
+            const res = await fetch(base + '/live-screen?t=' + Date.now(), { mode: 'cors', cache: 'no-store' });
+            if (res.ok) {
+                const blob = await res.blob();
+                if (blob && blob.size > 200) {
+                    const oldUrl = img.dataset.blobUrl;
+                    const newUrl = URL.createObjectURL(blob);
+                    img.src = newUrl;
+                    img.dataset.blobUrl = newUrl;
+                    if (oldUrl) URL.revokeObjectURL(oldUrl);
+                    isStreamActive = true;
+                    const ts = document.getElementById('stream_timestamp');
+                    if (ts) ts.innerText = '● HD Broadcast Live • ' + new Date().toLocaleTimeString();
+                    return;
+                }
+            }
+        } catch (e) {
+            // Local engine not running or connection refused
+        }
+        if (!isStreamActive || !img.src || img.src.startsWith('blob:')) {
+            img.src = STANDBY_SCREEN_SVG;
+            isStreamActive = false;
             const ts = document.getElementById('stream_timestamp');
-            if (ts) ts.innerText = 'Stream active • ' + new Date().toLocaleTimeString();
+            if (ts) ts.innerText = 'Standby Mode • Double-click Launch_Stark_Automation.vbs';
         }
     }
     setInterval(refreshLiveScreen, 1500);

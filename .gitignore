@@ -1,7 +1,6 @@
 # Sensitive personal credentials & session
 user_config.txt
 chrome_profile/
-automation_status.json
 uploads/*.pdf
 !uploads/.gitkeep
 
